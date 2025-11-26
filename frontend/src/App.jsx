@@ -14,69 +14,67 @@ import FormSelect from "./pages/Forms/FormSelect.jsx";
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Routes>
-        {/* Visitor */}
-        <Route path="/" element={<VisitorSelect />} />
-        <Route path="/login/guest" element={<GuestLogin />} />
-        <Route path="/login/internal" element={<InternalLogin />} />
+    <Routes>
+      {/* Visitor */}
+      <Route path="/" element={<VisitorSelect />} />
+      <Route path="/login/guest" element={<GuestLogin />} />
+      <Route path="/login/internal" element={<InternalLogin />} />
 
-        {/* Form Selection */}
-        <Route path="/forms/select" element={<FormSelect />} />
+      {/* Form Selection */}
+      <Route path="/forms/select" element={<FormSelect />} />
 
-        {/* Admin */}
-        <Route path="/admin/login" element={<AdminLogin />} />
+      {/* Admin */}
+      <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* forms */}
-        <Route
-          path="/forms"
-          element={
-            <ProtectedRoute>
-              <FormList />
-            </ProtectedRoute>
-          }
-        />
+      {/* forms */}
+      <Route
+        path="/forms"
+        element={
+          <ProtectedRoute>
+            <FormList />
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/forms/create"
-          element={
-            <ProtectedRoute>
-              <CreateForm />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/forms/create"
+        element={
+          <ProtectedRoute>
+            <CreateForm />
+          </ProtectedRoute>
+        }
+      />
 
-        <Route path="/forms/:id" element={<FormView />} />
+      <Route path="/forms/:id" element={<FormView />} />
 
-        <Route
-          path="/forms/:id/questions"
-          element={
-            <ProtectedRoute>
-              <AddQuestions />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/forms/:id/questions"
+        element={
+          <ProtectedRoute>
+            <AddQuestions />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* responses */}
-        <Route
-          path="/forms/:id/responses"
-          element={
-            <ProtectedRoute>
-              <ResponseList />
-            </ProtectedRoute>
-          }
-        />
+      {/* responses */}
+      <Route
+        path="/forms/:id/responses"
+        element={
+          <ProtectedRoute>
+            <ResponseList />
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/responses/:id"
-          element={
-            <ProtectedRoute>
-              <ResponseView />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </div>
+      <Route
+        path="/responses/:id"
+        element={
+          <ProtectedRoute>
+            <ResponseView />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 

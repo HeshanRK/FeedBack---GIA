@@ -1,30 +1,346 @@
 import puppeteer from "puppeteer";
 
 export async function generatePdfFromResponse({ response, answers, questions }) {
-  // Build a simple HTML representation
+  // Build a professional HTML representation matching the form view
   const html = `
-  <html>
+  <!DOCTYPE html>
+  <html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>Response ${response.id}</title>
     <style>
-      body { font-family: Arial, sans-serif; padding: 20px; }
-      h1 { font-size: 20px; margin-bottom: 8px; }
-      h2 { font-size: 16px; margin-top: 20px; }
-      .q { margin-bottom: 12px; }
-      .label { font-weight: bold; margin-bottom: 4px; }
-      .answer { margin-left: 8px; color: #333; }
-      .meta { font-size: 12px; color: #666; margin-bottom: 10px; }
+      /* Match FormView styling */
+      body {
+        background-color: #e5e7eb;
+        font-family: 'Times New Roman', serif;
+        margin: 0;
+        padding: 50px 20px;
+      }
+
+      .paper-doc {
+        background-color: #ffffff;
+        width: 210mm;
+        min-height: 297mm;
+        padding: 25mm;
+        margin: 0 auto;
+        position: relative;
+        box-sizing: border-box;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+
+      /* Header - Letterhead Style (No Logo) */
+      .header {
+        border-bottom: 2px solid #000;
+        padding-bottom: 20px;
+        margin-bottom: 40px;
+        text-align: right;
+        position: relative;
+        z-index: 1;
+        background-color: white;
+      }
+      
+      .header h1 {
+        font-size: 28px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin: 0;
+        color: #1f2937;
+        font-weight: bold;
+      }
+      
+      .header p {
+        margin: 8px 0 0 0;
+        font-size: 13px;
+        color: #6b7280;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Content Area */
+      .form-content {
+        position: relative;
+        z-index: 1;
+        background-color: white;
+        padding-bottom: 40px;
+      }
+
+      /* Date Display */
+      .date-display {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 40px;
+      }
+
+      .date-box {
+        width: 250px;
+      }
+
+      .date-label {
+        font-size: 11px;
+        font-weight: bold;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-family: 'Segoe UI', sans-serif;
+        margin-bottom: 5px;
+      }
+
+      .date-value {
+        border-bottom: 1px solid #9ca3af;
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        color: #1f2937;
+        padding: 5px 0;
+      }
+
+      /* Response Information Section */
+      .response-info {
+        background-color: #f9fafb;
+        border: 2px solid #e5e7eb;
+        padding: 25px;
+        margin-bottom: 40px;
+        border-radius: 8px;
+      }
+
+      .response-info h2 {
+        font-size: 18px;
+        color: #1f2937;
+        margin: 0 0 20px 0;
+        font-family: 'Segoe UI', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .info-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .info-label {
+        font-size: 11px;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 8px;
+        font-family: 'Segoe UI', sans-serif;
+        letter-spacing: 0.05em;
+      }
+
+      .info-value {
+        font-size: 15px;
+        color: #111827;
+        font-weight: 600;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 10px;
+        background-color: white;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+      }
+
+      /* Questions and Answers */
+      .question-block {
+        margin-bottom: 40px;
+        page-break-inside: avoid;
+      }
+
+      .question-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 35px;
+        height: 35px;
+        background-color: #e0e7ff;
+        color: #4f46e5;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 16px;
+        margin-right: 15px;
+        font-family: 'Segoe UI', sans-serif;
+        vertical-align: middle;
+      }
+
+      .question-label {
+        display: inline;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1f2937;
+        font-family: 'Segoe UI', sans-serif;
+        vertical-align: middle;
+      }
+
+      .answer-line {
+        border-bottom: 1px solid #9ca3af;
+        padding: 10px 0;
+        margin-left: 50px;
+        margin-top: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        color: #1f2937;
+        min-height: 25px;
+        word-wrap: break-word;
+      }
+
+      .answer-textarea {
+        border: 1px solid #9ca3af;
+        border-radius: 4px;
+        padding: 15px;
+        margin-left: 50px;
+        margin-top: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 15px;
+        color: #1f2937;
+        min-height: 80px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background-color: #fafafa;
+      }
+
+      .no-answer {
+        color: #9ca3af;
+        font-style: italic;
+      }
+
+      /* Footer */
+      .doc-footer {
+        position: relative;
+        z-index: 1;
+        margin-top: 60px;
+        padding-top: 15px;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        font-size: 10px;
+        color: #9ca3af;
+        font-family: 'Segoe UI', sans-serif;
+        background-color: white;
+      }
     </style>
   </head>
   <body>
-    <h1>Form Response #${response.id}</h1>
-    <div class="meta">Submitted at: ${new Date(response.submitted_at).toLocaleString()}</div>
-    ${answers.map(a => {
-      const questionText = a.q_text || (questions.find(q => q.id === a.question_id)?.q_text) || `Question ${a.question_id}`;
-      const displayValue = (typeof a.value === "object") ? JSON.stringify(a.value) : (a.value ?? "");
-      return `<div class="q"><div class="label">${escapeHtml(questionText)}</div><div class="answer">${escapeHtml(displayValue)}${a.file_path ? `<div>File: ${escapeHtml(a.file_path)}</div>` : ""}</div></div>`;
-    }).join("")}
+
+    <div class="paper-doc">
+      
+      <!-- Header - Letterhead (No Logo) -->
+      <header class="header">
+        <h1>Feedback Form</h1>
+        <p>GIA Feedback System</p>
+      </header>
+
+      <div class="form-content">
+        
+        <!-- Date Display -->
+        <div class="date-display">
+          <div class="date-box">
+            <div class="date-label">Date</div>
+            <div class="date-value">${new Date(response.submitted_at).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</div>
+          </div>
+        </div>
+
+        <!-- Response Information -->
+        <div class="response-info">
+          <h2>Response Information</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Response ID</div>
+              <div class="info-value">#${response.id}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Submitted Date</div>
+              <div class="info-value">${new Date(response.submitted_at).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Visitor Name</div>
+              <div class="info-value">${escapeHtml(response.name || 'N/A')}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Visitor Type</div>
+              <div class="info-value">${response.type ? (response.type === 'guest' ? 'Guest Visitor' : 'Internal Visitor') : 'N/A'}</div>
+            </div>
+            ${response.organization ? `
+            <div class="info-item">
+              <div class="info-label">Organization</div>
+              <div class="info-value">${escapeHtml(response.organization)}</div>
+            </div>
+            ` : ''}
+            ${response.id_number ? `
+            <div class="info-item">
+              <div class="info-label">ID Number</div>
+              <div class="info-value">${escapeHtml(response.id_number)}</div>
+            </div>
+            ` : ''}
+            ${response.purpose ? `
+            <div class="info-item">
+              <div class="info-label">Purpose</div>
+              <div class="info-value">${escapeHtml(response.purpose)}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Questions and Answers -->
+        ${answers.map((a, index) => {
+          const questionText = a.q_text || (questions.find(q => q.id === a.question_id)?.q_text) || `Question ${a.question_id}`;
+          
+          // Convert value to string properly and handle arrays
+          let displayValue = "";
+          if (a.value === null || a.value === undefined) {
+            displayValue = "";
+          } else if (Array.isArray(a.value)) {
+            // If it's an array, join with commas (for checkbox answers)
+            displayValue = a.value.join(", ");
+          } else if (typeof a.value === "object") {
+            displayValue = JSON.stringify(a.value, null, 2);
+          } else {
+            displayValue = String(a.value);
+          }
+          
+          const hasAnswer = displayValue && String(displayValue).trim() !== "";
+          const isLongAnswer = displayValue.length > 50 || displayValue.includes('\n');
+          
+          return `
+          <div class="question-block">
+            <div>
+              <span class="question-number">${index + 1}</span>
+              <span class="question-label">${escapeHtml(questionText)}</span>
+            </div>
+            ${isLongAnswer ? `
+              <div class="answer-textarea ${!hasAnswer ? 'no-answer' : ''}">
+                ${hasAnswer ? escapeHtml(displayValue) : 'No answer provided'}
+              </div>
+            ` : `
+              <div class="answer-line ${!hasAnswer ? 'no-answer' : ''}">
+                ${hasAnswer ? escapeHtml(displayValue) : 'No answer provided'}
+              </div>
+            `}
+            ${a.file_path ? `<div style="margin-left: 50px; margin-top: 10px; font-size: 12px; color: #6b7280;">📎 File: ${escapeHtml(a.file_path)}</div>` : ''}
+          </div>
+          `;
+        }).join("")}
+
+      </div>
+
+      <!-- Footer -->
+      <footer class="doc-footer">
+        Generated by GIA Feedback System. Internal Use Only. © 2025
+      </footer>
+
+    </div>
+
   </body>
   </html>
   `;
@@ -46,7 +362,7 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
     const pdfBuffer = await page.pdf({ 
       format: "A4", 
       printBackground: true,
-      margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+      margin: { top: '0', right: '0', bottom: '0', left: '0' }
     });
     
     return pdfBuffer;

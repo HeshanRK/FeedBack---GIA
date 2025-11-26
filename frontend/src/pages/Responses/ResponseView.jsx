@@ -20,7 +20,7 @@ export default function ResponseView() {
         const res = await axios.get(`${API_BASE_URL}/api/responses/details/${id}`, {
           headers: { Authorization: `Bearer ${getToken()}` }
         });
-        console.log("Response data:", res.data); // Debug log
+        console.log("Response data:", res.data);
         setResponse(res.data);
       } catch (err) {
         console.error("Error fetching response:", err);
@@ -50,6 +50,27 @@ export default function ResponseView() {
     }
   };
 
+  // Helper function to format answer values
+  const formatAnswerValue = (value) => {
+    if (value === null || value === undefined) {
+      return <span className="text-gray-400 italic">No answer provided</span>;
+    }
+    
+    if (Array.isArray(value)) {
+      // If it's an array, join with commas
+      return value.length > 0 ? value.join(", ") : <span className="text-gray-400 italic">No answer provided</span>;
+    }
+    
+    if (typeof value === 'object') {
+      // If it's an object, stringify it
+      return JSON.stringify(value, null, 2);
+    }
+    
+    // If it's a string or number
+    const stringValue = String(value).trim();
+    return stringValue || <span className="text-gray-400 italic">No answer provided</span>;
+  };
+
   if (loading) return <LoadingSpinner />;
   
   if (error) {
@@ -60,9 +81,12 @@ export default function ResponseView() {
         </div>
         <button
           onClick={() => navigate(-1)}
-          className="mt-4 text-indigo-600 hover:text-indigo-700 font-semibold"
+          className="mt-4 text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-2"
         >
-          ← Go Back
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Go Back
         </button>
       </div>
     );
@@ -85,62 +109,59 @@ export default function ResponseView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 px-4 pb-10">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold mb-1">Response #{id}</h2>
-              <p className="text-indigo-100 text-sm">Feedback Details</p>
-            </div>
-            <button
-              onClick={download}
-              className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-all flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Download PDF
-            </button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <button 
+          onClick={() => navigate(-1)} 
+          className="mb-6 text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-2 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
 
-        {/* Answers */}
-        <div className="p-6 space-y-6">
-          {response.map((answer, idx) => (
-            <div key={idx} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-              <div className="flex items-start gap-3 mb-2">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-indigo-600 font-semibold text-sm">{idx + 1}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800 text-lg mb-3">{answer.q_text}</p>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-700 whitespace-pre-wrap">
-                      {typeof answer.value === 'object' 
-                        ? JSON.stringify(answer.value, null, 2) 
-                        : (answer.value || <span className="text-gray-400 italic">No answer provided</span>)
-                      }
-                    </p>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold mb-1">Response #{id}</h2>
+                <p className="text-indigo-100 text-sm">Feedback Details</p>
+              </div>
+              <button
+                onClick={download}
+                className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-all flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download PDF
+              </button>
+            </div>
+          </div>
+
+          {/* Answers */}
+          <div className="p-6 space-y-6">
+            {response.map((answer, idx) => (
+              <div key={idx} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+                <div className="flex items-start gap-3 mb-2">
+                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-indigo-600 font-semibold text-sm">{idx + 1}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800 text-lg mb-3">{answer.q_text}</p>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-gray-700 whitespace-pre-wrap">
+                        {formatAnswerValue(answer.value)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex justify-between items-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gray-600 hover:text-gray-800 font-semibold flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
