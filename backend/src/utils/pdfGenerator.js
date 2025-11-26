@@ -29,14 +29,34 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
   </html>
   `;
 
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  let browser;
   try {
+    browser = await puppeteer.launch({ 
+      headless: true,
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu'
+      ]
+    });
+    
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
-    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
+    const pdfBuffer = await page.pdf({ 
+      format: "A4", 
+      printBackground: true,
+      margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+    });
+    
     return pdfBuffer;
+  } catch (err) {
+    console.error("Error generating PDF:", err);
+    throw new Error("Failed to generate PDF");
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 

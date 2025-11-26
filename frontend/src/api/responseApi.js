@@ -1,7 +1,8 @@
 import axios from "axios";
 import { getToken } from "../utils/storage";
+import { API_BASE_URL } from "../config/api";
 
-const API = "http://localhost:5000/api/responses";
+const API = `${API_BASE_URL}/api/responses`;
 
 export const submitResponse = async (formId, data) =>
   axios.post(`${API}/${formId}`, data);

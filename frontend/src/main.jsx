@@ -1,4 +1,5 @@
 import React from "react";
+import "./config/axiosConfig";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";

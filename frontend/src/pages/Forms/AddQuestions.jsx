@@ -3,47 +3,107 @@ import { useParams } from "react-router-dom";
 import { getFormById } from "../../api/formApi";
 import { addQuestion, deleteQuestion, updateQuestion } from "../../api/questionApi";
 import QuestionEditor from "../../components/forms/QuestionEditor";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function AddQuestions() {
   const { id } = useParams();
   const [form, setForm] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
-    const data = await getFormById(id);
-    setForm(data);
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getFormById(id);
+      setForm(data);
+    } catch (err) {
+      console.error("Error loading form:", err);
+      setError(err.response?.data?.message || "Failed to load form");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     load();
-  }, []);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const add = async () => {
-    const q = {
-      q_text: "New question",
-      q_type: "short",
-      required: false,
-      extra: { options: [] },
-    };
+    try {
+      setSaving(true);
+      setError("");
+      const q = {
+        q_text: "New question",
+        q_type: "short",
+        required: false,
+        extra: { options: [] },
+      };
 
-    await addQuestion(id, q);
-    load();
+      await addQuestion(id, q);
+      await load();
+    } catch (err) {
+      console.error("Error adding question:", err);
+      setError(err.response?.data?.message || "Failed to add question");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const save = async (question) => {
-    await updateQuestion(question.id, question);
-    load();
+    try {
+      setError("");
+      await updateQuestion(question.id, question);
+      await load();
+    } catch (err) {
+      console.error("Error updating question:", err);
+      setError(err.response?.data?.message || "Failed to save question");
+    }
   };
 
   const remove = async (qid) => {
-    await deleteQuestion(qid);
-    load();
+    if (!window.confirm("Are you sure you want to delete this question?")) {
+      return;
+    }
+    
+    try {
+      setError("");
+      await deleteQuestion(qid);
+      await load();
+    } catch (err) {
+      console.error("Error deleting question:", err);
+      setError(err.response?.data?.message || "Failed to delete question");
+    }
   };
 
-  if (!form) return <p>Loading...</p>;
+  if (loading) return <LoadingSpinner />;
+  
+  if (error && !form) {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 bg-red-100 border border-red-400 text-red-700 p-4 rounded">
+        {error}
+      </div>
+    );
+  }
+
+  if (!form) return <p className="text-center mt-10">Form not found</p>;
 
   return (
     <div className="max-w-3xl mx-auto mt-10 bg-white p-4 shadow rounded">
       <h2 className="text-2xl font-bold mb-4">{form.title} — Edit Questions</h2>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      {form.questions.length === 0 && (
+        <p className="text-gray-500 text-center my-8">
+          No questions yet. Click "Add Question" to get started.
+        </p>
+      )}
 
       {form.questions.map((q) => (
         <QuestionEditor
@@ -56,9 +116,10 @@ export default function AddQuestions() {
 
       <button
         onClick={add}
-        className="bg-blue-600 text-white p-2 px-4 rounded mt-4"
+        className="bg-blue-600 text-white p-2 px-4 rounded mt-4 hover:bg-blue-700 disabled:bg-blue-300"
+        disabled={saving}
       >
-        + Add Question
+        {saving ? "Adding..." : "+ Add Question"}
       </button>
     </div>
   );

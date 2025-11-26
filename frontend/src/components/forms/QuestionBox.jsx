@@ -3,14 +3,19 @@ export default function QuestionBox({ question, answer, setAnswer }) {
 
   return (
     <div className="mb-6">
-      <p className="font-semibold mb-2">{question.q_text}</p>
+      <p className="font-semibold mb-2">
+        {question.q_text}
+        {question.required && <span className="text-red-500 ml-1">*</span>}
+      </p>
 
       {/* short text */}
       {type === "short" && (
         <input
           className="border p-2 w-full"
+          placeholder={question.required ? "Required" : ""}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
+          required={question.required}
         />
       )}
 
@@ -19,8 +24,10 @@ export default function QuestionBox({ question, answer, setAnswer }) {
         <textarea
           className="border p-2 w-full"
           rows="3"
+          placeholder={question.required ? "Required" : ""}
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
+          required={question.required}
         />
       )}
 
@@ -34,6 +41,7 @@ export default function QuestionBox({ question, answer, setAnswer }) {
               value={opt}
               checked={answer === opt}
               onChange={(e) => setAnswer(e.target.value)}
+              required={question.required}
             />
             {opt}
           </label>
@@ -64,8 +72,9 @@ export default function QuestionBox({ question, answer, setAnswer }) {
           className="border p-2 w-full"
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
+          required={question.required}
         >
-          <option value="">Select</option>
+          <option value="">{question.required ? "Select (Required)" : "Select"}</option>
           {question.extra?.options?.map((opt, idx) => (
             <option key={idx}>{opt}</option>
           ))}
@@ -78,6 +87,7 @@ export default function QuestionBox({ question, answer, setAnswer }) {
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
+              type="button"
               className={`p-2 rounded ${
                 answer >= n ? "bg-yellow-400" : "bg-gray-300"
               }`}

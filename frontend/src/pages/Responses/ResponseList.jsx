@@ -1,33 +1,81 @@
 import { useEffect, useState } from "react";
 import { getResponses } from "../../api/responseApi";
 import { Link, useParams } from "react-router-dom";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function ResponseList() {
   const { id } = useParams();
   const [responses, setResponses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getResponses(id).then((data) => setResponses(data));
-  }, []);
+    const fetchResponses = async () => {
+      try {
+        setLoading(true);
+        const res = await getResponses(id);
+        setResponses(res.data);
+      } catch (err) {
+        console.error("Error fetching responses:", err);
+        setError(err.response?.data?.message || "Failed to load responses");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResponses();
+  }, [id]);
+
+  if (loading) return <LoadingSpinner />;
+
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto mt-10 bg-red-100 border border-red-400 text-red-700 p-4 rounded">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto mt-10">
-      <h2 className="text-2xl font-bold mb-4">Responses</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Responses</h2>
+        <Link 
+          to={`/forms/${id}/questions`}
+          className="text-blue-600 hover:underline"
+        >
+          ← Back to Form
+        </Link>
+      </div>
 
-      {responses.map((r) => (
-        <div key={r.id} className="p-4 border-b flex justify-between">
-          <div>
-            <p className="font-semibold">Response #{r.id}</p>
-            <p className="text-sm text-gray-600">
-              {r.visitor_name} ({r.visitor_type})
-            </p>
-          </div>
-
-          <Link to={`/responses/${r.id}`} className="text-blue-600">
-            View
-          </Link>
+      {responses.length === 0 ? (
+        <div className="bg-white shadow p-8 rounded text-center">
+          <p className="text-gray-500">No responses yet</p>
         </div>
-      ))}
+      ) : (
+        <div className="bg-white shadow rounded">
+          {responses.map((r) => (
+            <div key={r.id} className="p-4 border-b last:border-b-0 flex justify-between items-center hover:bg-gray-50">
+              <div>
+                <p className="font-semibold">Response #{r.id}</p>
+                <p className="text-sm text-gray-600">
+                  {r.visitor_name} ({r.visitor_type})
+                </p>
+                <p className="text-xs text-gray-400">
+                  {new Date(r.submitted_at).toLocaleString()}
+                </p>
+              </div>
+
+              <Link 
+                to={`/responses/${r.id}`} 
+                className="text-blue-600 hover:underline"
+              >
+                View Details
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
