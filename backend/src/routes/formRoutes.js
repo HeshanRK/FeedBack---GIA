@@ -1,11 +1,12 @@
 import express from "express";
-import { createForm, getForms, getFormById } from "../controllers/formController.js";
+import { createForm, getForms, getFormById, deleteForm } from "../controllers/formController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", authenticate, createForm); // only authenticated users can create forms
+router.post("/", authenticate, createForm);
 router.get("/", getForms);
 router.get("/:id", getFormById);
+router.delete("/:id", authenticate, deleteForm);
 
 export default router;

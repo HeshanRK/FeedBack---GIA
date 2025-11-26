@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { getForms } from "../../api/formApi";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
+import { getToken } from "../../utils/storage";
 
 export default function FormList() {
   const [forms, setForms] = useState([]);
@@ -9,21 +12,39 @@ export default function FormList() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchForms = async () => {
-      try {
-        setLoading(true);
-        const data = await getForms();
-        setForms(data);
-      } catch (err) {
-        console.error("Error fetching forms:", err);
-        setError(err.response?.data?.message || "Failed to load forms");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchForms();
   }, []);
+
+  const fetchForms = async () => {
+    try {
+      setLoading(true);
+      const data = await getForms();
+      setForms(data);
+    } catch (err) {
+      console.error("Error fetching forms:", err);
+      setError(err.response?.data?.message || "Failed to load forms");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (formId) => {
+    if (!window.confirm("Are you sure you want to delete this form? This action cannot be undone and will delete all questions and responses.")) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_BASE_URL}/api/forms/${formId}`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      // Refresh the list
+      fetchForms();
+      alert("Form deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting form:", err);
+      alert(err.response?.data?.message || "Failed to delete form");
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
 
@@ -84,11 +105,17 @@ export default function FormList() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">{form.title}</h3>
                   <p className="text-gray-500 text-sm mb-3">{form.description || "No description"}</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>Created {new Date(form.created_at).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>Created {new Date(form.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-600">
+                      {form.visitor_type === 'both' ? 'All Visitors' : 
+                       form.visitor_type === 'guest' ? 'Guest Only' : 'Internal Only'}
+                    </span>
                   </div>
                 </div>
 
@@ -111,6 +138,12 @@ export default function FormList() {
                   >
                     Responses
                   </Link>
+                  <button 
+                    onClick={() => handleDelete(form.id)} 
+                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all font-medium text-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>

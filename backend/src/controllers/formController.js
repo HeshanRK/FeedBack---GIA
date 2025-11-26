@@ -36,9 +36,7 @@ export const createForm = async (req, res, next) => {
 
 export const getForms = async (req, res, next) => {
   try {
-    // Get visitor_type filter from query params
     const { visitor_type } = req.query;
-    
     const forms = await FormModel.findAll(visitor_type);
     res.json(forms);
   } catch (err) {
@@ -65,6 +63,22 @@ export const getFormById = async (req, res, next) => {
     res.json({ ...form, questions });
   } catch (err) {
     console.error("Error fetching form:", err);
+    next(err);
+  }
+};
+
+export const deleteForm = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: "Invalid form ID" });
+    }
+
+    await FormModel.delete(id);
+    res.json({ ok: true, message: "Form deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting form:", err);
     next(err);
   }
 };

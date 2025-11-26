@@ -13,7 +13,6 @@ export const FormModel = {
     let query = "SELECT * FROM forms";
     const params = [];
     
-    // Filter by visitor_type if provided
     if (visitor_type) {
       query += " WHERE visitor_type = ? OR visitor_type = 'both'";
       params.push(visitor_type);
@@ -28,5 +27,14 @@ export const FormModel = {
   async findById(id) {
     const [rows] = await pool.query("SELECT * FROM forms WHERE id = ?", [id]);
     return rows[0];
+  },
+
+  async delete(id) {
+    // Delete all questions first (cascade)
+    await pool.query("DELETE FROM questions WHERE form_id = ?", [id]);
+    // Delete all responses
+    await pool.query("DELETE FROM responses WHERE form_id = ?", [id]);
+    // Delete the form
+    await pool.query("DELETE FROM forms WHERE id = ?", [id]);
   }
 };
