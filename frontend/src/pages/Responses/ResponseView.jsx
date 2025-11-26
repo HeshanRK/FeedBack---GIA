@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { downloadPdf } from "../../api/responseApi";
 import axios from "axios";
 import { getToken } from "../../utils/storage";
@@ -8,6 +8,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function ResponseView() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -16,9 +17,10 @@ export default function ResponseView() {
     const fetchResponse = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${API_BASE_URL}/api/responses/${id}`, {
+        const res = await axios.get(`${API_BASE_URL}/api/responses/details/${id}`, {
           headers: { Authorization: `Bearer ${getToken()}` }
         });
+        console.log("Response data:", res.data); // Debug log
         setResponse(res.data);
       } catch (err) {
         console.error("Error fetching response:", err);
@@ -52,33 +54,95 @@ export default function ResponseView() {
   
   if (error) {
     return (
-      <div className="max-w-xl mx-auto mt-10 bg-red-100 border border-red-400 text-red-700 p-4 rounded">
-        {error}
+      <div className="max-w-4xl mx-auto mt-10 px-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-lg">
+          {error}
+        </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-4 text-indigo-600 hover:text-indigo-700 font-semibold"
+        >
+          ← Go Back
+        </button>
       </div>
     );
   }
 
   if (!response || response.length === 0) {
-    return <p className="text-center mt-10">No response data found</p>;
+    return (
+      <div className="max-w-4xl mx-auto mt-10 px-4">
+        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+          <p className="text-gray-500">No response data found</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 text-indigo-600 hover:text-indigo-700 font-semibold"
+          >
+            ← Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-10 bg-white p-6 shadow rounded">
-      <h2 className="font-bold text-xl mb-4">Response #{id}</h2>
-
-      <button
-        onClick={download}
-        className="bg-purple-600 text-white p-2 rounded mb-4 w-full hover:bg-purple-700"
-      >
-        Download PDF
-      </button>
-
-      {response.map((a, idx) => (
-        <div key={idx} className="border-b p-2">
-          <p className="font-semibold">{a.q_text}</p>
-          <p className="text-gray-600">{a.value}</p>
+    <div className="max-w-4xl mx-auto mt-10 px-4 pb-10">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold mb-1">Response #{id}</h2>
+              <p className="text-indigo-100 text-sm">Feedback Details</p>
+            </div>
+            <button
+              onClick={download}
+              className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-all flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download PDF
+            </button>
+          </div>
         </div>
-      ))}
+
+        {/* Answers */}
+        <div className="p-6 space-y-6">
+          {response.map((answer, idx) => (
+            <div key={idx} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+              <div className="flex items-start gap-3 mb-2">
+                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-indigo-600 font-semibold text-sm">{idx + 1}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800 text-lg mb-3">{answer.q_text}</p>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-gray-700 whitespace-pre-wrap">
+                      {typeof answer.value === 'object' 
+                        ? JSON.stringify(answer.value, null, 2) 
+                        : (answer.value || <span className="text-gray-400 italic">No answer provided</span>)
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 flex justify-between items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-600 hover:text-gray-800 font-semibold flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

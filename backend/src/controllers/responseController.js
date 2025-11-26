@@ -105,3 +105,24 @@ export const getResponsePdf = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getResponseDetails = async (req, res, next) => {
+  try {
+    const responseId = req.params.responseId;
+    
+    if (!responseId || isNaN(responseId)) {
+      return res.status(400).json({ message: "Invalid response ID" });
+    }
+
+    const answers = await AnswerModel.findByResponseId(responseId);
+    
+    if (!answers || answers.length === 0) {
+      return res.status(404).json({ message: "Response not found" });
+    }
+
+    res.json(answers);
+  } catch (err) {
+    console.error("Error fetching response details:", err);
+    next(err);
+  }
+};

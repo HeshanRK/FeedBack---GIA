@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { internalLogin } from "../../api/visitorApi";
-import { getForms } from "../../api/formApi";
 import { useNavigate } from "react-router-dom";
 
 export default function InternalLogin() {
@@ -12,38 +11,35 @@ export default function InternalLogin() {
   const navigate = useNavigate();
 
   const submit = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      
-      if (!id_number.trim()) {
-        setError("ID Number is required");
-        setLoading(false);
-        return;
-      }
-      
-      if (!name.trim()) {
-        setError("Name is required");
-        setLoading(false);
-        return;
-      }
-
-      const res = await internalLogin({ id_number, name });
-      localStorage.setItem("visitorId", res.visitorId);
-      
-      const forms = await getForms();
-      if (forms && forms.length > 0) {
-        navigate(`/forms/${forms[0].id}`);
-      } else {
-        setError("No forms available at the moment");
-      }
-    } catch (err) {
-      console.error("Internal login error:", err);
-      setError(err.response?.data?.message || "Failed to login. Please try again.");
-    } finally {
+  try {
+    setLoading(true);
+    setError("");
+    
+    if (!id_number.trim()) {
+      setError("ID Number is required");
       setLoading(false);
+      return;
     }
-  };
+    
+    if (!name.trim()) {
+      setError("Name is required");
+      setLoading(false);
+      return;
+    }
+
+    const res = await internalLogin({ id_number, name });
+    localStorage.setItem("visitorId", res.visitorId);
+    localStorage.setItem("visitorType", "internal"); // Store visitor type
+    
+    // Redirect to form selection page
+    navigate("/forms/select");
+  } catch (err) {
+    console.error("Internal login error:", err);
+    setError(err.response?.data?.message || "Failed to login. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

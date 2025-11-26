@@ -10,8 +10,12 @@ export const createForm = async (data) => {
   });
 };
 
-export const getForms = async () => {
-  const res = await axios.get(API);
+export const getForms = async (visitorType = null) => {
+  let url = API;
+  if (visitorType) {
+    url += `?visitor_type=${visitorType}`;
+  }
+  const res = await axios.get(url);
   return res.data;
 };
 

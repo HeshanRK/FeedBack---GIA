@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import VisitorSelect from "./pages/Login/VisitorSelect.jsx";
 import GuestLogin from "./pages/Login/GuestLogin.jsx";
 import InternalLogin from "./pages/Login/InternalLogin.jsx";
@@ -9,24 +9,20 @@ import CreateForm from "./pages/Forms/CreateForm.jsx";
 import AddQuestions from "./pages/Forms/AddQuestions.jsx";
 import ResponseList from "./pages/Responses/ResponseList.jsx";
 import ResponseView from "./pages/Responses/ResponseView.jsx";
-import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import FormSelect from "./pages/Forms/FormSelect.jsx";
 
 function App() {
-  const location = useLocation();
-  
-  // Hide navbar on login pages
-  const hideNavbar = ["/", "/login/guest", "/login/internal", "/admin/login"].includes(location.pathname);
-
   return (
     <div className="min-h-screen bg-gray-100">
-      {!hideNavbar && <Navbar />}
-
       <Routes>
         {/* Visitor */}
         <Route path="/" element={<VisitorSelect />} />
         <Route path="/login/guest" element={<GuestLogin />} />
         <Route path="/login/internal" element={<InternalLogin />} />
+
+        {/* Form Selection */}
+        <Route path="/forms/select" element={<FormSelect />} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />

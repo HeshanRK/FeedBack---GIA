@@ -3,7 +3,7 @@ import { QuestionModel } from "../models/questionModel.js";
 
 export const createForm = async (req, res, next) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, visitor_type = 'both' } = req.body;
     
     if (!title || title.trim() === "") {
       return res.status(400).json({ message: "title is required" });
@@ -12,11 +12,18 @@ export const createForm = async (req, res, next) => {
     if (title.length > 255) {
       return res.status(400).json({ message: "title must be less than 255 characters" });
     }
+
+    // Validate visitor_type
+    const validTypes = ['guest', 'internal', 'both'];
+    if (visitor_type && !validTypes.includes(visitor_type)) {
+      return res.status(400).json({ message: "visitor_type must be 'guest', 'internal', or 'both'" });
+    }
     
     const created_by = req.user?.id || null;
     const id = await FormModel.create({ 
       title: title.trim(), 
-      description: description?.trim() || null, 
+      description: description?.trim() || null,
+      visitor_type: visitor_type || 'both',
       created_by 
     });
     
@@ -29,7 +36,10 @@ export const createForm = async (req, res, next) => {
 
 export const getForms = async (req, res, next) => {
   try {
-    const forms = await FormModel.findAll();
+    // Get visitor_type filter from query params
+    const { visitor_type } = req.query;
+    
+    const forms = await FormModel.findAll(visitor_type);
     res.json(forms);
   } catch (err) {
     console.error("Error fetching forms:", err);
