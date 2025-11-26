@@ -21,15 +21,18 @@ export const QuestionModel = {
   },
 
   async findByFormId(formId) {
-    const [rows] = await pool.query("SELECT * FROM questions WHERE form_id=? ORDER BY order_index ASC", [formId]);
-    // parse JSON
-    return rows.map(r => ({ ...r, extra: r.extra ? JSON.parse(r.extra) : null }));
-  },
+  const [rows] = await pool.query("SELECT * FROM questions WHERE form_id=? ORDER BY order_index ASC", [formId]);
+  // parse JSON only if it's a string
+  return rows.map(r => ({ 
+    ...r, 
+    extra: r.extra && typeof r.extra === 'string' ? JSON.parse(r.extra) : r.extra 
+  }));
+},
 
   async findById(id) {
-    const [rows] = await pool.query("SELECT * FROM questions WHERE id=?", [id]);
-    const q = rows[0];
-    if (!q) return null;
-    return { ...q, extra: q.extra ? JSON.parse(q.extra) : null };
-  }
+  const [rows] = await pool.query("SELECT * FROM questions WHERE id=?", [id]);
+  const q = rows[0];
+  if (!q) return null;
+  return { ...q, extra: q.extra && typeof q.extra === 'string' ? JSON.parse(q.extra) : q.extra };
+}
 };

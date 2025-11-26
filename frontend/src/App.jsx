@@ -10,6 +10,7 @@ import ResponseList from "./pages/Responses/ResponseList.jsx";
 import ResponseView from "./pages/Responses/ResponseView.jsx";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import CreateForm from "./pages/Forms/CreateForm.jsx";
 
 function App() {
   return (
@@ -45,6 +46,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/forms/create"
+  element={
+    <ProtectedRoute>
+      <CreateForm />
+    </ProtectedRoute>
+  }
+/>
 
         {/* responses */}
         <Route

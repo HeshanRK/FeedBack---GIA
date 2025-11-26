@@ -38,25 +38,20 @@ export default function FormList() {
   return (
     <div className="max-w-4xl mx-auto mt-10">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Forms</h2>
-        <Link 
-          to="/forms/create" 
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          + Create Form
-        </Link>
-      </div>
+  <h2 className="text-2xl font-bold">Forms</h2>
+  {/* TODO: Add Create Form functionality */}
+</div>
 
       {forms.length === 0 ? (
-        <div className="bg-white shadow p-8 rounded text-center">
-          <p className="text-gray-500 mb-4">No forms yet</p>
-          <Link 
-            to="/forms/create" 
-            className="bg-blue-600 text-white px-4 py-2 rounded inline-block hover:bg-blue-700"
-          >
-            Create Your First Form
-          </Link>
-        </div>
+        <div className="flex justify-between items-center mb-4">
+  <h2 className="text-2xl font-bold">Forms</h2>
+  <Link 
+    to="/forms/create" 
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+  >
+    + Create Form
+  </Link>
+</div>
       ) : (
         <div className="bg-white shadow p-4 rounded">
           {forms.map((form) => (

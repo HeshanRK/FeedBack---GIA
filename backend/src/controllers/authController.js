@@ -27,6 +27,8 @@ export const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     
+    console.log("Login attempt:", username); // Add this
+    
     // Validate input
     const errors = validateInput({ username, password }, {
       username: { required: true, minLength: 3, maxLength: 50 },
@@ -34,13 +36,18 @@ export const login = async (req, res, next) => {
     });
     
     if (errors.length > 0) {
+      console.log("Validation errors:", errors); // Add this
       return res.status(400).json({ message: errors.join(", ") });
     }
 
     const user = await UserModel.findByUsername(username.trim());
+    console.log("User found:", user ? "Yes" : "No"); // Add this
+    
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const valid = await bcrypt.compare(password, user.password_hash);
+    console.log("Password valid:", valid); // Add this
+    
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "8h" });
