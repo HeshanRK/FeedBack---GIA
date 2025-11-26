@@ -1,21 +1,26 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import VisitorSelect from "./pages/Login/VisitorSelect.jsx";
 import GuestLogin from "./pages/Login/GuestLogin.jsx";
 import InternalLogin from "./pages/Login/InternalLogin.jsx";
 import AdminLogin from "./pages/Login/AdminLogin.jsx";
 import FormList from "./pages/Forms/FormList.jsx";
 import FormView from "./pages/Forms/FormView.jsx";
+import CreateForm from "./pages/Forms/CreateForm.jsx";
 import AddQuestions from "./pages/Forms/AddQuestions.jsx";
 import ResponseList from "./pages/Responses/ResponseList.jsx";
 import ResponseView from "./pages/Responses/ResponseView.jsx";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import CreateForm from "./pages/Forms/CreateForm.jsx";
 
 function App() {
+  const location = useLocation();
+  
+  // Hide navbar on login pages
+  const hideNavbar = ["/", "/login/guest", "/login/internal", "/admin/login"].includes(location.pathname);
+
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
+      {!hideNavbar && <Navbar />}
 
       <Routes>
         {/* Visitor */}
@@ -36,6 +41,15 @@ function App() {
           }
         />
 
+        <Route
+          path="/forms/create"
+          element={
+            <ProtectedRoute>
+              <CreateForm />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/forms/:id" element={<FormView />} />
 
         <Route
@@ -46,15 +60,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route
-  path="/forms/create"
-  element={
-    <ProtectedRoute>
-      <CreateForm />
-    </ProtectedRoute>
-  }
-/>
 
         {/* responses */}
         <Route
