@@ -20,20 +20,29 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-// static files for uploaded files
+// Static files for uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "..", process.env.UPLOAD_DIR || "uploads")));
 
-// routes
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/visitor", visitorRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api/responses", responseRoutes);
 
-// health
+// Health check
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-// generic error handler
+// Serve frontend static files
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+app.use(express.static(frontendPath));
+
+// Handle React Router - send all non-API requests to index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+// Generic error handler
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).json({ message: err.message || "Internal server error" });

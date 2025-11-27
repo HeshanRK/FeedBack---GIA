@@ -69,8 +69,7 @@ export default function FormView() {
   const submit = async () => {
     try {
       setError("");
-      setSuccess(false);
-
+      
       if (!visitorId) {
         setError("Please login first");
         return;
@@ -82,11 +81,21 @@ export default function FormView() {
 
       setSubmitting(true);
       await submitResponse(id, { visitorId, answers });
+      
+      // TRIGGER SUCCESS STATE
       setSuccess(true);
 
+      // Play success sound (optional)
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzOP0fPTgjMGHm7A7+OZSA4RV6zn77BdFwxJouDvwWwhBzmV0fPT');
+        audio.play().catch(() => {});
+      } catch { /* ignore */ }
+
+      // Redirect after 10 seconds (10000ms)
       setTimeout(() => {
         navigate("/forms/select");
-      }, 2000);
+      }, 20000);
+
     } catch (err) {
       console.error("Error submitting response:", err);
       setError(
@@ -100,18 +109,21 @@ export default function FormView() {
 
   if (loading) return <LoadingSpinner />;
 
+  // Display date logic
+  const today = new Date();
+  const displayDate = today.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   if (error && !form) {
     return (
       <div className="min-h-screen bg-gray-200 flex items-center justify-center px-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full">
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded mb-4">
-            {error}
-          </div>
-          <button
-            onClick={() => navigate("/forms/select")}
-            className="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-2"
-          >
-            Back to Form Selection
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button onClick={() => navigate("/forms/select")} className="text-indigo-600 font-bold hover:underline">
+            Go Back
           </button>
         </div>
       </div>
@@ -120,95 +132,100 @@ export default function FormView() {
 
   if (!form) return <p className="text-center mt-10">Form not found</p>;
 
-  // Format Date for the Auto-fill (Readable for display)
-  const today = new Date();
-  const displayDate = today.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   return (
     <div className="min-h-screen bg-gray-200 py-12 px-4 font-serif">
-      {/* This Style Block overrides the inputs inside QuestionBox 
-        to look like "Paper Lines" instead of boxes 
-      */}
       <style>{`
+        /* Paper Line Inputs */
         .paper-theme input[type="text"], 
         .paper-theme input[type="email"], 
         .paper-theme input[type="number"], 
         .paper-theme textarea,
         .paper-theme select {
             background-color: transparent !important;
-            border-width: 0 0 1px 0 !important; /* Bottom border only */
-            border-color: #9ca3af !important; /* gray-400 */
+            border-width: 0 0 1px 0 !important;
+            border-color: #9ca3af !important;
             border-radius: 0 !important;
             font-family: 'Courier New', Courier, monospace !important;
             padding: 4px 0 !important;
             box-shadow: none !important;
             font-size: 1.1rem !important;
         }
-        .paper-theme input:focus, 
-        .paper-theme textarea:focus {
-            border-color: #4f46e5 !important; /* Indigo-600 */
+        .paper-theme input:focus, .paper-theme textarea:focus {
+            border-color: #4f46e5 !important;
             background-color: rgba(79, 70, 229, 0.05) !important;
             outline: none !important;
-            box-shadow: none !important;
         }
-        /* Style the labels to look like printed form text */
         .paper-theme label {
             font-family: 'Segoe UI', sans-serif !important;
             font-weight: 700 !important;
             color: #374151 !important;
             text-transform: uppercase !important;
             font-size: 0.85rem !important;
-            letter-spacing: 0.05em !important;
         }
+
+        /* --- SUCCESS ANIMATIONS --- */
+        
+        /* 1. Circle Scale In */
+        @keyframes scaleIn {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 2. Checkmark Drawing */
+        @keyframes drawCheck {
+          to { stroke-dashoffset: 0; }
+        }
+
+        /* 3. Text Fade Up */
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .anim-circle {
+          animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .anim-check {
+          stroke-dasharray: 100;
+          stroke-dashoffset: 100; /* Start hidden */
+          animation: drawCheck 0.6s ease-out forwards 0.5s; /* Delay until circle is done */
+        }
+
+        .anim-text-1 { opacity: 0; animation: fadeUp 0.6s ease-out forwards 0.8s; }
+        .anim-text-2 { opacity: 0; animation: fadeUp 0.6s ease-out forwards 1.0s; }
+        .anim-text-3 { opacity: 0; animation: fadeUp 0.6s ease-out forwards 1.2s; }
+
       `}</style>
 
       <div className="max-w-5xl mx-auto">
-        {/* Back Button - Outside the paper */}
-        <button
-          onClick={() => navigate("/forms/select")}
-          className="mb-6 text-gray-600 hover:text-indigo-700 font-sans font-semibold flex items-center gap-2 transition-colors"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        
+        {/* Hide Back button on success so user focuses on the message */}
+        {!success && (
+          <button
+            onClick={() => navigate("/forms/select")}
+            className="mb-6 text-gray-600 hover:text-indigo-700 font-sans font-semibold flex items-center gap-2 transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Selection
-        </button>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Selection
+          </button>
+        )}
 
         {/* --- THE PAPER DOCUMENT --- */}
-        {/* max-w-[210mm] creates the A4 width */}
-        <div className="bg-white shadow-2xl relative mx-auto max-w-[210mm] min-h-[297mm] p-[25mm] pb-[40mm]">
+        <div className="bg-white shadow-2xl relative mx-auto max-w-[210mm] min-h-[297mm] p-[25mm] transition-all duration-500">
           
-          {/* 1. Watermark (Faded Logo) */}
+          {/* Watermark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-            <img
-              src="/gia Logo.png"
-              alt="Watermark"
-              className="w-[400px] opacity-[0.06]"
-            />
+            <img src="/gia Logo.png" alt="Watermark" className="w-[400px] opacity-[0.06]" />
           </div>
 
-          {/* 2. Header (Letterhead) */}
+          {/* Header */}
           <div className="relative z-10 flex justify-between items-end border-b-2 border-black pb-6 mb-10">
             <div className="flex items-center gap-4">
-              <img
-                src="/gia Logo.png"
-                alt="GIA Logo"
-                className="h-16 w-auto object-contain"
-              />
+              <img src="/gia Logo.png" alt="GIA Logo" className="h-16 w-auto object-contain" />
             </div>
             <div className="text-right">
               <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-widest m-0">
@@ -220,60 +237,96 @@ export default function FormView() {
             </div>
           </div>
 
-          {/* 3. Form Content */}
+          {/* --- CONTENT SWITCHER --- */}
           <div className="relative z-10 paper-theme">
-            
-            {/* Auto Date Field */}
-            <div className="flex justify-end mb-10">
-              <div className="w-48">
-                <label className="block text-xs font-bold text-gray-500 uppercase font-sans mb-1">
-                  Date
-                </label>
-                <div className="border-b border-gray-400 font-mono text-lg text-gray-800 pb-1">
-                   {displayDate}
+
+            {success ? (
+              /* --- SUCCESS VIEW --- */
+              <div className="flex flex-col items-center justify-center pt-20 text-center">
+                
+                {/* 1. Animated Checkmark Circle */}
+                <div className="w-28 h-28 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-xl anim-circle">
+                  <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path 
+                      className="anim-check" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={3} 
+                      d="M5 13l4 4L19 7" 
+                    />
+                  </svg>
                 </div>
-              </div>
-            </div>
 
-            {/* Error / Success Messages */}
-            {success && (
-              <div className="mb-6 p-4 bg-green-50 text-green-800 font-sans text-sm border border-green-200 text-center">
-                Feedback recorded successfully. Redirecting...
-              </div>
-            )}
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 text-red-800 font-sans text-sm border border-red-200 text-center">
-                {error}
-              </div>
-            )}
-
-            {/* Questions Loop */}
-            <div className="space-y-10">
-              {form.questions.map((q) => (
-                <div key={q.id}>
-                  <QuestionBox
-                    question={q}
-                    answer={answers.find((a) => a.question_id === q.id)?.value}
-                    setAnswer={(val) => changeAnswer(q.id, val)}
-                  />
+                {/* 2. Text */}
+                <h2 className="text-4xl font-serif font-bold text-gray-800 mb-6 anim-text-1">
+                  Thank You!
+                </h2>
+                
+                {/* Updated Long Text Message */}
+                <div className="max-w-lg mx-auto anim-text-2">
+                  <p className="text-lg text-gray-600 font-sans leading-relaxed mb-8">
+                    Thank you for taking the time to share your feedback. Your comments are valuable and help us improve our services. We truly appreciate your contribution.
+                    <br />
+                    <span className="font-bold text-gray-800 mt-4 block text-xl font-serif">– GIA</span>
+                  </p>
                 </div>
-              ))}
-            </div>
 
-            {/* 4. Submit Button (Stamps the paper) */}
-            <div className="mt-16 mb-16 text-center">
-              <button
-                onClick={submit}
-                disabled={submitting}
-                className="bg-indigo-600 text-white font-sans text-sm font-bold uppercase tracking-wider py-3 px-10 rounded shadow-md hover:bg-indigo-700 transition-all disabled:opacity-50"
-              >
-                {submitting ? "Submitting..." : "Submit Record"}
-              </button>
-            </div>
+                {/* 3. Redirect Note */}
+                <div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-full anim-text-3">
+                   <p className="text-sm text-gray-500 font-sans flex items-center gap-2">
+                     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+                     Redirecting you to the home screen...
+                   </p>
+                </div>
+
+              </div>
+
+            ) : (
+              /* --- FORM VIEW --- */
+              <>
+                <div className="flex justify-end mb-10">
+                  <div className="w-48">
+                    <label className="block text-xs font-bold text-gray-500 uppercase font-sans mb-1">Date</label>
+                    <div className="border-b border-gray-400 font-mono text-lg text-gray-800 pb-1">
+                      {displayDate}
+                    </div>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 text-red-800 font-sans text-sm border border-red-200 text-center">
+                    {error}
+                  </div>
+                )}
+
+                <div className="space-y-10">
+                  {form.questions.map((q) => (
+                    <div key={q.id}>
+                      <QuestionBox
+                        question={q}
+                        answer={answers.find((a) => a.question_id === q.id)?.value}
+                        setAnswer={(val) => changeAnswer(q.id, val)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-10 mb-14 text-center">
+                  <button
+                    onClick={submit}
+                    disabled={submitting}
+                    className="bg-indigo-600 text-white font-sans text-sm font-bold uppercase tracking-wider py-3 px-10 rounded shadow-md hover:bg-indigo-700 transition-all disabled:opacity-50"
+                  >
+                    {submitting ? "Submitting..." : "Submit Record"}
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
 
-          {/* 5. Footer - Changed from absolute to relative */}
-          <div className="relative z-10 border-t border-gray-300 pt-4 text-center mt-8">
+          {/* Footer */}
+          <div className="absolute bottom-[25mm] left-[25mm] right-[25mm] border-t border-gray-300 pt-4 text-center">
             <p className="text-[10px] text-gray-400 font-sans">
               Generated by GIA Feedback System. Internal Use Only. © 2025
             </p>
