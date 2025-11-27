@@ -67,45 +67,50 @@ export default function FormView() {
   };
 
   const submit = async () => {
-    try {
-      setError("");
-      
-      if (!visitorId) {
-        setError("Please login first");
-        return;
-      }
-
-      if (!validateAnswers()) {
-        return;
-      }
-
-      setSubmitting(true);
-      await submitResponse(id, { visitorId, answers });
-      
-      // TRIGGER SUCCESS STATE
-      setSuccess(true);
-
-      // Play success sound (optional)
-      try {
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzOP0fPTgjMGHm7A7+OZSA4RV6zn77BdFwxJouDvwWwhBzmV0fPT');
-        audio.play().catch(() => {});
-      } catch { /* ignore */ }
-
-      // Redirect after 10 seconds (10000ms)
-      setTimeout(() => {
-        navigate("/forms/select");
-      }, 20000);
-
-    } catch (err) {
-      console.error("Error submitting response:", err);
-      setError(
-        err.response?.data?.message ||
-          "Failed to submit feedback. Please try again."
-      );
-    } finally {
-      setSubmitting(false);
+  try {
+    setError("");
+    
+    if (!visitorId) {
+      setError("Please login first");
+      return;
     }
-  };
+
+    if (!validateAnswers()) {
+      return;
+    }
+
+    setSubmitting(true);
+    await submitResponse(id, { visitorId, answers });
+    
+    // TRIGGER SUCCESS STATE
+    setSuccess(true);
+
+    // Play success sound (optional)
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzOP0fPTgjMGHm7A7+OZSA4RV6zn77BdFwxJouDvwWwhBzmV0fPT');
+      audio.play().catch(() => {});
+    } catch { /* ignore */ }
+
+    // Auto-logout and redirect after 5 seconds
+    setTimeout(() => {
+      // Clear visitor data (logout)
+      localStorage.removeItem("visitorId");
+      localStorage.removeItem("visitorType");
+      
+      // Redirect to login page
+      navigate("/");
+    }, 5000); // 5 seconds to see the thank you message
+
+  } catch (err) {
+    console.error("Error submitting response:", err);
+    setError(
+      err.response?.data?.message ||
+        "Failed to submit feedback. Please try again."
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (loading) return <LoadingSpinner />;
 
@@ -272,12 +277,12 @@ export default function FormView() {
                 </div>
 
                 {/* 3. Redirect Note */}
-                <div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-full anim-text-3">
-                   <p className="text-sm text-gray-500 font-sans flex items-center gap-2">
-                     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-                     Redirecting you to the home screen...
-                   </p>
-                </div>
+<div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-full anim-text-3">
+   <p className="text-sm text-gray-500 font-sans flex items-center gap-2">
+     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+     Logging out and returning to login page...
+   </p>
+</div>
 
               </div>
 
