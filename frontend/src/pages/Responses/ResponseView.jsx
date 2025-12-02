@@ -56,19 +56,44 @@ export default function ResponseView() {
       return <span className="text-gray-400 italic">No answer provided</span>;
     }
     
+    // If it's already an array, join with commas
     if (Array.isArray(value)) {
-      // If it's an array, join with commas
       return value.length > 0 ? value.join(", ") : <span className="text-gray-400 italic">No answer provided</span>;
     }
     
+    // If it's a string, try to parse as JSON
+    if (typeof value === 'string') {
+      const stringValue = value.trim();
+      
+      // Check if it looks like JSON (starts with [ or {)
+      if (stringValue.startsWith('[') || stringValue.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(stringValue);
+          
+          // If parsed result is an array, join with commas
+          if (Array.isArray(parsed)) {
+            return parsed.length > 0 ? parsed.join(", ") : <span className="text-gray-400 italic">No answer provided</span>;
+          }
+          
+          // If it's an object, stringify it nicely
+          return JSON.stringify(parsed, null, 2);
+        } catch {
+          // If parsing fails, return as-is
+          return stringValue || <span className="text-gray-400 italic">No answer provided</span>;
+        }
+      }
+      
+      // Regular string - return as-is
+      return stringValue || <span className="text-gray-400 italic">No answer provided</span>;
+    }
+    
+    // If it's an object (but not array), stringify it
     if (typeof value === 'object') {
-      // If it's an object, stringify it
       return JSON.stringify(value, null, 2);
     }
     
-    // If it's a string or number
-    const stringValue = String(value).trim();
-    return stringValue || <span className="text-gray-400 italic">No answer provided</span>;
+    // For numbers or other types
+    return String(value);
   };
 
   if (loading) return <LoadingSpinner />;

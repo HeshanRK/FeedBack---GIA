@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { guestLogin } from "../../api/visitorApi";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
 
 export default function GuestLogin() {
   const [name, setName] = useState("");
@@ -16,29 +18,39 @@ export default function GuestLogin() {
   const dark = "#231F20";
 
   const submit = async () => {
-  try {
-    setLoading(true);
-    setError("");
-    
-    if (!name.trim()) {
-      setError("Name is required");
-      setLoading(false);
-      return;
-    }
+    try {
+      setLoading(true);
+      setError("");
+      
+      if (!name.trim()) {
+        setError("Name is required");
+        setLoading(false);
+        return;
+      }
 
-    const res = await guestLogin({ name, organization, purpose });
-    localStorage.setItem("visitorId", res.visitorId);
-    localStorage.setItem("visitorType", "guest"); // Store visitor type
-    
-    // Redirect to form selection page
-    navigate("/forms/select");
-  } catch (err) {
-    console.error("Guest login error:", err);
-    setError(err.response?.data?.message || "Failed to login. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+      // Create visitor
+      const res = await guestLogin({ name, organization, purpose });
+      localStorage.setItem("visitorId", res.visitorId);
+      localStorage.setItem("visitorType", "guest");
+      
+      // Get active form for guest
+      try {
+        const activeFormRes = await axios.get(`${API_BASE_URL}/api/forms/active/guest`);
+        const activeForm = activeFormRes.data;
+        
+        // Redirect directly to the active form
+        navigate(`/forms/${activeForm.id}`);
+      } catch (formErr) {
+        console.error("Error fetching active form:", formErr);
+        setError("No feedback form is currently available for guest visitors. Please contact the administrator.");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Guest login error:", err);
+      setError(err.response?.data?.message || "Failed to login. Please try again.");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
@@ -53,7 +65,7 @@ export default function GuestLogin() {
 
       {/* --- BACKGROUND LAYER 2: Giant GIA Logo Watermark --- */}
       <img
-        src="/gia-logo.PNG" 
+        src="/gia-logo2.PNG" 
         alt="GIA Watermark"
         className="absolute z-0 pointer-events-none"
         style={{
@@ -71,7 +83,7 @@ export default function GuestLogin() {
         <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
             <img 
-              src="/gia-logo.PNG" 
+              src="/gia-logo2.PNG" 
               alt="Logo" 
               className="w-full h-full object-contain" 
             />

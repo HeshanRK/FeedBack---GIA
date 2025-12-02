@@ -224,13 +224,13 @@ export default function FormView() {
           
           {/* Watermark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-            <img src="/gia Logo.png" alt="Watermark" className="w-[400px] opacity-[0.06]" />
+            <img src="/gia-logo2.PNG" alt="Watermark" className="w-[400px] opacity-[0.06]" />
           </div>
 
           {/* Header */}
           <div className="relative z-10 flex justify-between items-end border-b-2 border-black pb-6 mb-10">
             <div className="flex items-center gap-4">
-              <img src="/gia Logo.png" alt="GIA Logo" className="h-16 w-auto object-contain" />
+              <img src="/gia-logo2.PNG" alt="GIA Logo" className="h-16 w-auto object-contain" />
             </div>
             <div className="text-right">
               <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-widest m-0">

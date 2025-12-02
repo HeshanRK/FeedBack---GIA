@@ -119,3 +119,80 @@ export const deleteForm = async (req, res, next) => {
     next(err);
   }
 };
+
+// NEW: Set active form for guest visitors
+export const setActiveGuest = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: "Invalid form ID" });
+    }
+
+    // Check if form exists and is available for guests
+    const form = await FormModel.findById(id);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+
+    if (form.visitor_type !== 'guest' && form.visitor_type !== 'both') {
+      return res.status(400).json({ message: "This form is not available for guest visitors" });
+    }
+
+    await FormModel.setActiveGuest(id);
+    res.json({ ok: true, message: "Active guest form set successfully" });
+  } catch (err) {
+    console.error("Error setting active guest form:", err);
+    next(err);
+  }
+};
+
+// NEW: Set active form for internal visitors
+export const setActiveInternal = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: "Invalid form ID" });
+    }
+
+    // Check if form exists and is available for internal visitors
+    const form = await FormModel.findById(id);
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
+
+    if (form.visitor_type !== 'internal' && form.visitor_type !== 'both') {
+      return res.status(400).json({ message: "This form is not available for internal visitors" });
+    }
+
+    await FormModel.setActiveInternal(id);
+    res.json({ ok: true, message: "Active internal form set successfully" });
+  } catch (err) {
+    console.error("Error setting active internal form:", err);
+    next(err);
+  }
+};
+
+// NEW: Get active form for visitor type
+export const getActiveForm = async (req, res, next) => {
+  try {
+    const { visitorType } = req.params;
+    
+    if (!visitorType || !['guest', 'internal'].includes(visitorType)) {
+      return res.status(400).json({ message: "Invalid visitor type" });
+    }
+
+    const form = await FormModel.getActiveForm(visitorType);
+    
+    if (!form) {
+      return res.status(404).json({ message: `No active form set for ${visitorType} visitors` });
+    }
+
+    const questions = await QuestionModel.findByFormId(form.id);
+    res.json({ ...form, questions });
+  } catch (err) {
+    console.error("Error fetching active form:", err);
+    next(err);
+  }
+};

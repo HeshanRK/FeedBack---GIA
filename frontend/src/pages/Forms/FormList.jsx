@@ -12,7 +12,7 @@ export default function FormList() {
   const [filteredForms, setFilteredForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [visitorFilter, setVisitorFilter] = useState("all"); // New state for filter
+  const [visitorFilter, setVisitorFilter] = useState("all");
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -20,7 +20,6 @@ export default function FormList() {
     fetchForms();
   }, []);
 
-  // Filter forms whenever forms or filter changes
   useEffect(() => {
     filterForms();
   }, [forms, visitorFilter]);
@@ -65,6 +64,34 @@ export default function FormList() {
     }
   };
 
+  // NEW: Set active form for guest visitors
+  const handleSetActiveGuest = async (formId) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/forms/${formId}/set-active-guest`, {}, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      fetchForms();
+      alert("Active guest form set successfully!");
+    } catch (err) {
+      console.error("Error setting active guest form:", err);
+      alert(err.response?.data?.message || "Failed to set active guest form");
+    }
+  };
+
+  // NEW: Set active form for internal visitors
+  const handleSetActiveInternal = async (formId) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/forms/${formId}/set-active-internal`, {}, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      fetchForms();
+      alert("Active internal form set successfully!");
+    } catch (err) {
+      console.error("Error setting active internal form:", err);
+      alert(err.response?.data?.message || "Failed to set active internal form");
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/admin/login");
@@ -95,13 +122,11 @@ export default function FormList() {
           </div>
           
           <div className="flex items-center gap-3">
-            {/* User Info */}
             <div className="text-right mr-2">
               <p className="text-sm text-gray-600">Welcome,</p>
               <p className="text-sm font-semibold text-gray-800">{user?.username}</p>
             </div>
 
-            {/* Create Button */}
             <Link 
               to="/forms/create" 
               className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
@@ -112,7 +137,6 @@ export default function FormList() {
               Create New Form
             </Link>
 
-            {/* Download Reports Button */}
             <Link 
               to="/reports/download" 
               className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
@@ -123,7 +147,6 @@ export default function FormList() {
               Download Reports
             </Link>
 
-            {/* Logout Button */}
             <button
               onClick={handleLogout}
               className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
@@ -146,7 +169,6 @@ export default function FormList() {
               <h2 className="text-lg font-bold text-gray-800">Filter Forms by Visitor Type</h2>
             </div>
             
-            {/* Filter Buttons */}
             <div className="flex gap-2">
               <button
                 onClick={() => setVisitorFilter("all")}
@@ -228,7 +250,7 @@ export default function FormList() {
                         <p className="text-gray-500 text-sm mb-3">
                           {form.description || "No description provided"}
                         </p>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <span className="inline-flex items-center gap-2 text-xs text-gray-400">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -243,53 +265,107 @@ export default function FormList() {
                             {form.visitor_type === 'both' ? 'All Visitors' : 
                              form.visitor_type === 'guest' ? 'Guest Only' : 'Internal Only'}
                           </span>
+
+                          {/* NEW: Active Status Badges */}
+                          {form.is_active_guest && (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
+                              ✓ Active for Guests
+                            </span>
+                          )}
+                          {form.is_active_internal && (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white">
+                              ✓ Active for Internal
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Right Side - Action Buttons */}
-                  <div className="flex gap-2 ml-4">
-                    <Link 
-                      to={`/forms/${form.id}`} 
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-medium text-sm"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      View
-                    </Link>
-                    
-                    <Link 
-                      to={`/forms/${form.id}/questions`} 
-                      className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all font-medium text-sm"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </Link>
-                    
-                    <Link 
-                      to={`/forms/${form.id}/responses`} 
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all font-medium text-sm"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      Responses
-                    </Link>
-                    
-                    <button 
-                      onClick={() => handleDelete(form.id)} 
-                      className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all font-medium text-sm"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
-                    </button>
+                  <div className="flex flex-col gap-2 ml-4">
+                    {/* Row 1: View, Edit, Responses, Delete */}
+                    <div className="flex gap-2">
+                      <Link 
+                        to={`/forms/${form.id}`} 
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-medium text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        View
+                      </Link>
+                      
+                      <Link 
+                        to={`/forms/${form.id}/questions`} 
+                        className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all font-medium text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                      </Link>
+                      
+                      <Link 
+                        to={`/forms/${form.id}/responses`} 
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all font-medium text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Responses
+                      </Link>
+                      
+                      <button 
+                        onClick={() => handleDelete(form.id)} 
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all font-medium text-sm"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+
+                    {/* Row 2: Set Active Buttons */}
+                    <div className="flex gap-2">
+                      {/* Set Active for Guest Button */}
+                      {(form.visitor_type === 'guest' || form.visitor_type === 'both') && (
+                        <button
+                          onClick={() => handleSetActiveGuest(form.id)}
+                          disabled={form.is_active_guest}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm ${
+                            form.is_active_guest
+                              ? 'bg-blue-600 text-white cursor-not-allowed'
+                              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {form.is_active_guest ? 'Active for Guests' : 'Set Active for Guests'}
+                        </button>
+                      )}
+
+                      {/* Set Active for Internal Button */}
+                      {(form.visitor_type === 'internal' || form.visitor_type === 'both') && (
+                        <button
+                          onClick={() => handleSetActiveInternal(form.id)}
+                          disabled={form.is_active_internal}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm ${
+                            form.is_active_internal
+                              ? 'bg-green-600 text-white cursor-not-allowed'
+                              : 'bg-green-50 text-green-600 hover:bg-green-100'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+                          </svg>
+                          {form.is_active_internal ? 'Active for Internal' : 'Set Active for Internal'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

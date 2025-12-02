@@ -9,9 +9,8 @@ import CreateForm from "./pages/Forms/CreateForm.jsx";
 import AddQuestions from "./pages/Forms/AddQuestions.jsx";
 import ResponseList from "./pages/Responses/ResponseList.jsx";
 import ResponseView from "./pages/Responses/ResponseView.jsx";
-import DownloadReports from "./pages/Reports/DownloadReports.jsx"; // NEW
+import DownloadReports from "./pages/Reports/DownloadReports.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import FormSelect from "./pages/Forms/FormSelect.jsx";
 
 function App() {
   return (
@@ -21,8 +20,7 @@ function App() {
       <Route path="/login/guest" element={<GuestLogin />} />
       <Route path="/login/internal" element={<InternalLogin />} />
 
-      {/* Form Selection */}
-      <Route path="/forms/select" element={<FormSelect />} />
+      {/* Form Selection route removed - visitors go directly to active form */}
 
       {/* Admin */}
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -76,7 +74,7 @@ function App() {
         }
       />
 
-      {/* NEW: Download Reports */}
+      {/* Download Reports */}
       <Route
         path="/reports/download"
         element={

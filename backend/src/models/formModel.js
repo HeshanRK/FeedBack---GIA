@@ -29,7 +29,6 @@ export const FormModel = {
     return rows[0];
   },
 
-  // NEW UPDATE FUNCTION
   async update(id, { title, description, visitor_type }) {
     await pool.query(
       "UPDATE forms SET title = ?, description = ?, visitor_type = ? WHERE id = ?",
@@ -44,5 +43,62 @@ export const FormModel = {
     await pool.query("DELETE FROM responses WHERE form_id = ?", [id]);
     // Delete the form
     await pool.query("DELETE FROM forms WHERE id = ?", [id]);
+  },
+
+  // NEW: Set active form for guest visitors
+  async setActiveGuest(formId) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      // First, deactivate all guest forms
+      await connection.query("UPDATE forms SET is_active_guest = FALSE");
+      
+      // Then activate the selected form
+      await connection.query("UPDATE forms SET is_active_guest = TRUE WHERE id = ?", [formId]);
+      
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+
+  // NEW: Set active form for internal visitors
+  async setActiveInternal(formId) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      // First, deactivate all internal forms
+      await connection.query("UPDATE forms SET is_active_internal = FALSE");
+      
+      // Then activate the selected form
+      await connection.query("UPDATE forms SET is_active_internal = TRUE WHERE id = ?", [formId]);
+      
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+
+  // NEW: Get active form for a visitor type
+  async getActiveForm(visitorType) {
+    let query;
+    if (visitorType === 'guest') {
+      query = "SELECT * FROM forms WHERE is_active_guest = TRUE LIMIT 1";
+    } else if (visitorType === 'internal') {
+      query = "SELECT * FROM forms WHERE is_active_internal = TRUE LIMIT 1";
+    } else {
+      return null;
+    }
+    
+    const [rows] = await pool.query(query);
+    return rows[0] || null;
   }
 };

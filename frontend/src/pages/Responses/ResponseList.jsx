@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getResponses } from "../../api/responseApi";
 import { Link, useParams } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
+import { getToken } from "../../utils/storage";
 
 export default function ResponseList() {
   const { id } = useParams();
@@ -9,22 +12,40 @@ export default function ResponseList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchResponses = async () => {
-      try {
-        setLoading(true);
-        const res = await getResponses(id);
-        setResponses(res.data);
-      } catch (err) {
-        console.error("Error fetching responses:", err);
-        setError(err.response?.data?.message || "Failed to load responses");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResponses();
+  const fetchResponses = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await getResponses(id);
+      setResponses(res.data);
+    } catch (err) {
+      console.error("Error fetching responses:", err);
+      setError(err.response?.data?.message || "Failed to load responses");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchResponses();
+  }, [fetchResponses]);
+
+  const handleDelete = async (responseId) => {
+    if (!window.confirm("Are you sure you want to delete this response? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/responses/${responseId}`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      
+      alert("Response deleted successfully!");
+      fetchResponses(); // Refresh the list
+    } catch (err) {
+      console.error("Error deleting response:", err);
+      alert(err.response?.data?.message || "Failed to delete response");
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
 
@@ -66,12 +87,21 @@ export default function ResponseList() {
                 </p>
               </div>
 
-              <Link 
-                to={`/responses/${r.id}`} 
-                className="text-blue-600 hover:underline"
-              >
-                View Details
-              </Link>
+              <div className="flex gap-2">
+                <Link 
+                  to={`/responses/${r.id}`} 
+                  className="text-blue-600 hover:underline px-3 py-1"
+                >
+                  View Details
+                </Link>
+
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-all"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

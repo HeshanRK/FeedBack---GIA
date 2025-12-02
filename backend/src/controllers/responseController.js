@@ -1,3 +1,4 @@
+/* cSpell:disable */
 import { ResponseModel } from "../models/responseModel.js";
 import { AnswerModel } from "../models/answerModel.js";
 import { QuestionModel } from "../models/questionModel.js";
@@ -19,7 +20,6 @@ export const submitResponse = async (req, res, next) => {
       return res.status(400).json({ message: "Answers are required" });
     }
 
-    // Validate visitor exists if visitorId provided
     if (visitorId) {
       const visitor = await VisitorModel.findById(visitorId);
       if (!visitor) {
@@ -33,7 +33,6 @@ export const submitResponse = async (req, res, next) => {
       submitted_by_user 
     });
 
-    // Save answers
     for (const a of answers) {
       if (!a.question_id) {
         console.warn("Skipping answer without question_id:", a);
@@ -88,10 +87,10 @@ export const getResponsePdf = async (req, res, next) => {
       return res.status(404).json({ message: "Response not found" });
     }
 
-    const answers = await AnswerModel.findByResponseId(responseId);
+    // Use the method that includes question text
+    const answers = await AnswerModel.findByResponseIdWithQuestions(responseId);
     const questions = await QuestionModel.findByFormId(response.form_id);
 
-    // Generate PDF buffer
     const pdfBuffer = await generatePdfFromResponse({ response, answers, questions });
 
     res.set({
@@ -115,7 +114,8 @@ export const getResponseDetails = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid response ID" });
     }
 
-    const answers = await AnswerModel.findByResponseId(responseId);
+    // FIXED: Use method that includes question text
+    const answers = await AnswerModel.findByResponseIdWithQuestions(responseId);
     
     if (!answers || answers.length === 0) {
       return res.status(404).json({ message: "Response not found" });
@@ -176,7 +176,6 @@ export const downloadAllResponses = async (req, res, next) => {
       });
     }
 
-    // ⭐ Fetch answers WITH q_text
     const responsesWithAnswers = await Promise.all(
       responses.map(async (response) => {
         const answers = await AnswerModel.findByResponseIdWithQuestions(
@@ -190,9 +189,7 @@ export const downloadAllResponses = async (req, res, next) => {
       })
     );
 
-    // Create Excel File
     const workbook = await generateFeedbackExcel(responsesWithAnswers);
-
     const buffer = await workbook.xlsx.writeBuffer();
 
     res.writeHead(200, {
@@ -205,6 +202,26 @@ export const downloadAllResponses = async (req, res, next) => {
     res.end(buffer);
   } catch (err) {
     console.error("Error downloading responses:", err);
+    next(err);
+  }
+};
+
+export const deleteResponse = async (req, res, next) => {
+  try {
+    const responseId = req.params.responseId;
+    
+    if (!responseId || isNaN(responseId)) {
+      return res.status(400).json({ message: "Invalid response ID" });
+    }
+
+    const { pool } = await import("../config/db.js");
+    
+    await pool.query("DELETE FROM answers WHERE response_id = ?", [responseId]);
+    await pool.query("DELETE FROM responses WHERE id = ?", [responseId]);
+    
+    res.json({ ok: true, message: "Response deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting response:", err);
     next(err);
   }
 };
