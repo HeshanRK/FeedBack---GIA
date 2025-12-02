@@ -10,6 +10,7 @@ export default function GuestLogin() {
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [exiting, setExiting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -28,18 +29,22 @@ export default function GuestLogin() {
         return;
       }
 
-      // Create visitor
       const res = await guestLogin({ name, organization, purpose });
       localStorage.setItem("visitorId", res.visitorId);
       localStorage.setItem("visitorType", "guest");
       
-      // Get active form for guest
       try {
         const activeFormRes = await axios.get(`${API_BASE_URL}/api/forms/active/guest`);
         const activeForm = activeFormRes.data;
         
-        // Redirect directly to the active form
-        navigate(`/forms/${activeForm.id}`);
+        // Trigger exit animation
+        setExiting(true);
+        
+        // Wait for animation to complete before navigating
+        setTimeout(() => {
+          navigate(`/forms/${activeForm.id}`);
+        }, 500); // 500ms matches animation duration
+        
       } catch (formErr) {
         console.error("Error fetching active form:", formErr);
         setError("No feedback form is currently available for guest visitors. Please contact the administrator.");
@@ -54,7 +59,39 @@ export default function GuestLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
-      {/* --- BACKGROUND LAYER 1: Gold Dot Grid --- */}
+      
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes slideOutLeft {
+          from {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: translateX(-50px) scale(0.95);
+          }
+        }
+        
+        .page-enter {
+          animation: slideInRight 0.5s ease-out forwards;
+        }
+        
+        .page-exit {
+          animation: slideOutLeft 0.5s ease-out forwards;
+        }
+      `}</style>
+
       <div 
         className="absolute inset-0 z-0"
         style={{ 
@@ -63,7 +100,6 @@ export default function GuestLogin() {
         }}
       ></div>
 
-      {/* --- BACKGROUND LAYER 2: Giant GIA Logo Watermark --- */}
       <img
         src="/gia-logo2.PNG" 
         alt="GIA Watermark"
@@ -78,8 +114,7 @@ export default function GuestLogin() {
         }}
       />
 
-      <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex">
-        {/* Left Side - Branding */}
+      <div className={`relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex ${exiting ? 'page-exit' : 'page-enter'}`}>
         <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
             <img 
@@ -95,7 +130,6 @@ export default function GuestLogin() {
           </div>
         </div>
 
-        {/* Right Side - Guest Form */}
         <div className="w-1/2 flex flex-col justify-center px-16 relative">
           <div className="absolute top-0 right-0 w-24 h-2" style={{ backgroundColor: gold }}></div>
 
@@ -172,6 +206,7 @@ export default function GuestLogin() {
               className="w-full text-gray-400 text-sm transition-colors mt-3"
               onMouseOver={(e) => (e.currentTarget.style.color = gold)}
               onMouseOut={(e) => (e.currentTarget.style.color = "#9CA3AF")}
+              disabled={loading}
             >
               ← Back to Login Options
             </button>

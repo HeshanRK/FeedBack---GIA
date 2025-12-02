@@ -8,6 +8,53 @@ export default function VisitorSelect() {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
       
+      {/* Page transition animation styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeOut {
+          from {
+            opacity: 1;
+            transform: scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+        }
+
+        .page-transition-enter {
+          animation: fadeInUp 0.6s ease-out forwards;
+          opacity: 0;
+        }
+
+        .page-transition-exit {
+          animation: fadeOut 0.4s ease-out forwards;
+        }
+
+        /* Button hover animations */
+        .animate-button {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-button:hover {
+          transform: translateY(-2px);
+        }
+
+        .animate-button:active {
+          transform: translateY(0);
+        }
+      `}</style>
+
       {/* --- BACKGROUND LAYER 1: Gold Dot Grid --- */}
       <div 
         className="absolute inset-0 z-0"
@@ -19,11 +66,10 @@ export default function VisitorSelect() {
 
       {/* --- BACKGROUND LAYER 2: Giant GIA Logo Watermark --- */}
       <img
-        src="/gia-logo.PNG" 
+        src="/gia-logo2.PNG" 
         alt="GIA Watermark"
         className="absolute z-0 pointer-events-none"
         style={{
-          // UPDATED: Set to 2500px for maximum visibility
           width: "2500px", 
           opacity: 0.08, 
           top: "50%",
@@ -34,10 +80,8 @@ export default function VisitorSelect() {
       />
 
       {/* --- FOREGROUND: The Login Card --- */}
-      {/* UPDATED: Added animation style for smooth entry */}
       <div 
-        className="relative z-10 rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex"
-        style={{ animation: "fadeInUp 0.8s ease-out forwards", opacity: 0 }}
+        className="relative z-10 rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex page-transition-enter"
       >
 
         {/* LEFT SIDE */}
@@ -48,7 +92,7 @@ export default function VisitorSelect() {
           {/* --- LOGO CIRCLE --- */}
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg transform transition-transform hover:scale-105 duration-500">
             <img 
-              src="/gia-logo.PNG" 
+              src="/gia-logo2.PNG" 
               alt="Logo" 
               className="w-full h-full object-contain" 
             />
@@ -62,7 +106,6 @@ export default function VisitorSelect() {
         </div>
 
         {/* RIGHT SIDE */}
-        {/* UPDATED: Added 'bg-white/95' and 'backdrop-blur' for Glassmorphism */}
         <div className="w-1/2 flex flex-col justify-center px-16 relative bg-white/95 backdrop-blur-sm">
           
           <div className="absolute top-0 right-0 w-24 h-2" style={{ backgroundColor: gold }}></div>
@@ -76,7 +119,7 @@ export default function VisitorSelect() {
           {/* INTERNAL VISITOR BUTTON */}
           <Link
             to="/login/internal"
-            className="group w-full text-white py-4 px-6 rounded-xl text-center font-semibold transition-all mb-4 flex items-center justify-center gap-3 shadow-md hover:shadow-xl hover:-translate-y-1"
+            className="animate-button group w-full text-white py-4 px-6 rounded-xl text-center font-semibold mb-4 flex items-center justify-center gap-3 shadow-md hover:shadow-xl"
             style={{ backgroundColor: gold }}
             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = goldHover)}
             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = gold)}
@@ -91,7 +134,7 @@ export default function VisitorSelect() {
           {/* GUEST VISITOR BUTTON */}
           <Link
             to="/login/guest"
-            className="group w-full border-2 py-4 px-6 rounded-xl text-center font-semibold transition-all mb-4 flex items-center justify-center gap-3 hover:shadow-lg hover:-translate-y-1"
+            className="animate-button group w-full border-2 py-4 px-6 rounded-xl text-center font-semibold mb-4 flex items-center justify-center gap-3 hover:shadow-lg"
             style={{ borderColor: "#E5E5E5", color: dark }}
             onMouseOver={(e) => {
               e.currentTarget.style.borderColor = gold;
@@ -127,20 +170,6 @@ export default function VisitorSelect() {
           </div>
         </div>
       </div>
-
-      {/* --- ANIMATION STYLES --- */}
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

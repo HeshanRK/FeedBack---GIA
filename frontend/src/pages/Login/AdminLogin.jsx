@@ -52,7 +52,23 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
-      {/* --- BACKGROUND LAYER 1: Gold Dot Grid --- */}
+      
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .page-enter {
+          animation: slideInRight 0.5s ease-out forwards;
+        }
+      `}</style>
+
       <div 
         className="absolute inset-0 z-0"
         style={{ 
@@ -61,9 +77,8 @@ export default function AdminLogin() {
         }}
       ></div>
 
-      {/* --- BACKGROUND LAYER 2: Giant GIA Logo Watermark --- */}
       <img
-        src="/gia-logo.PNG" 
+        src="/gia-logo2.PNG" 
         alt="GIA Watermark"
         className="absolute z-0 pointer-events-none"
         style={{
@@ -76,12 +91,11 @@ export default function AdminLogin() {
         }}
       />
 
-      <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex">
-        {/* Left Side - Branding */}
+      <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex page-enter">
         <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
             <img 
-              src="/gia-logo.PNG" 
+              src="/gia-logo2.PNG" 
               alt="Logo" 
               className="w-full h-full object-contain" 
             />
@@ -93,7 +107,6 @@ export default function AdminLogin() {
           </div>
         </div>
 
-        {/* Right Side - Admin Form */}
         <div className="w-1/2 flex flex-col justify-center px-16 relative">
           <div className="absolute top-0 right-0 w-24 h-2" style={{ backgroundColor: gold }}></div>
 

@@ -67,54 +67,47 @@ export default function FormView() {
   };
 
   const submit = async () => {
-  try {
-    setError("");
-    
-    if (!visitorId) {
-      setError("Please login first");
-      return;
-    }
-
-    if (!validateAnswers()) {
-      return;
-    }
-
-    setSubmitting(true);
-    await submitResponse(id, { visitorId, answers });
-    
-    // TRIGGER SUCCESS STATE
-    setSuccess(true);
-
-    // Play success sound (optional)
     try {
-      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzOP0fPTgjMGHm7A7+OZSA4RV6zn77BdFwxJouDvwWwhBzmV0fPT');
-      audio.play().catch(() => {});
-    } catch { /* ignore */ }
-
-    // Auto-logout and redirect after 5 seconds
-    setTimeout(() => {
-      // Clear visitor data (logout)
-      localStorage.removeItem("visitorId");
-      localStorage.removeItem("visitorType");
+      setError("");
       
-      // Redirect to login page
-      navigate("/");
-    }, 5000); // 5 seconds to see the thank you message
+      if (!visitorId) {
+        setError("Please login first");
+        return;
+      }
 
-  } catch (err) {
-    console.error("Error submitting response:", err);
-    setError(
-      err.response?.data?.message ||
-        "Failed to submit feedback. Please try again."
-    );
-  } finally {
-    setSubmitting(false);
-  }
-};
+      if (!validateAnswers()) {
+        return;
+      }
+
+      setSubmitting(true);
+      await submitResponse(id, { visitorId, answers });
+      
+      setSuccess(true);
+
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzOP0fPTgjMGHm7A7+OZSA4RV6zn77BdFwxJouDvwWwhBzmV0fPT');
+        audio.play().catch(() => {});
+      } catch { /* ignore */ }
+
+      setTimeout(() => {
+        localStorage.removeItem("visitorId");
+        localStorage.removeItem("visitorType");
+        navigate("/");
+      }, 5000);
+
+    } catch (err) {
+      console.error("Error submitting response:", err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to submit feedback. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
 
-  // Display date logic
   const today = new Date();
   const displayDate = today.toLocaleDateString("en-US", {
     year: "numeric",
@@ -168,21 +161,33 @@ export default function FormView() {
             font-size: 0.85rem !important;
         }
 
-        /* --- SUCCESS ANIMATIONS --- */
-        
-        /* 1. Circle Scale In */
+        /* Page entrance animation */
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .form-entrance {
+          animation: fadeInScale 0.6s ease-out forwards;
+        }
+
+        /* Success animations */
         @keyframes scaleIn {
           0% { transform: scale(0); opacity: 0; }
           60% { transform: scale(1.1); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
         }
 
-        /* 2. Checkmark Drawing */
         @keyframes drawCheck {
           to { stroke-dashoffset: 0; }
         }
 
-        /* 3. Text Fade Up */
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
@@ -194,19 +199,17 @@ export default function FormView() {
         
         .anim-check {
           stroke-dasharray: 100;
-          stroke-dashoffset: 100; /* Start hidden */
-          animation: drawCheck 0.6s ease-out forwards 0.5s; /* Delay until circle is done */
+          stroke-dashoffset: 100;
+          animation: drawCheck 0.6s ease-out forwards 0.5s;
         }
 
         .anim-text-1 { opacity: 0; animation: fadeUp 0.6s ease-out forwards 0.8s; }
         .anim-text-2 { opacity: 0; animation: fadeUp 0.6s ease-out forwards 1.0s; }
         .anim-text-3 { opacity: 0; animation: fadeUp 0.6s ease-out forwards 1.2s; }
-
       `}</style>
 
       <div className="max-w-5xl mx-auto">
         
-        {/* Hide Back button on success so user focuses on the message */}
         {!success && (
           <button
             onClick={() => navigate("/forms/select")}
@@ -219,15 +222,12 @@ export default function FormView() {
           </button>
         )}
 
-        {/* --- THE PAPER DOCUMENT --- */}
-        <div className="bg-white shadow-2xl relative mx-auto max-w-[210mm] min-h-[297mm] p-[25mm] transition-all duration-500">
+        <div className="bg-white shadow-2xl relative mx-auto max-w-[210mm] min-h-[297mm] p-[25mm] transition-all duration-500 form-entrance">
           
-          {/* Watermark */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
             <img src="/gia-logo2.PNG" alt="Watermark" className="w-[400px] opacity-[0.06]" />
           </div>
 
-          {/* Header */}
           <div className="relative z-10 flex justify-between items-end border-b-2 border-black pb-6 mb-10">
             <div className="flex items-center gap-4">
               <img src="/gia-logo2.PNG" alt="GIA Logo" className="h-16 w-auto object-contain" />
@@ -242,14 +242,11 @@ export default function FormView() {
             </div>
           </div>
 
-          {/* --- CONTENT SWITCHER --- */}
           <div className="relative z-10 paper-theme">
 
             {success ? (
-              /* --- SUCCESS VIEW --- */
               <div className="flex flex-col items-center justify-center pt-20 text-center">
                 
-                {/* 1. Animated Checkmark Circle */}
                 <div className="w-28 h-28 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-xl anim-circle">
                   <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path 
@@ -262,12 +259,10 @@ export default function FormView() {
                   </svg>
                 </div>
 
-                {/* 2. Text */}
                 <h2 className="text-4xl font-serif font-bold text-gray-800 mb-6 anim-text-1">
                   Thank You!
                 </h2>
                 
-                {/* Updated Long Text Message */}
                 <div className="max-w-lg mx-auto anim-text-2">
                   <p className="text-lg text-gray-600 font-sans leading-relaxed mb-8">
                     Thank you for taking the time to share your feedback. Your comments are valuable and help us improve our services. We truly appreciate your contribution.
@@ -276,18 +271,16 @@ export default function FormView() {
                   </p>
                 </div>
 
-                {/* 3. Redirect Note */}
-<div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-full anim-text-3">
-   <p className="text-sm text-gray-500 font-sans flex items-center gap-2">
-     <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
-     Logging out and returning to login page...
-   </p>
-</div>
+                <div className="bg-gray-50 border border-gray-200 px-6 py-3 rounded-full anim-text-3">
+                  <p className="text-sm text-gray-500 font-sans flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span>
+                    Logging out and returning to login page...
+                  </p>
+                </div>
 
               </div>
 
             ) : (
-              /* --- FORM VIEW --- */
               <>
                 <div className="flex justify-end mb-10">
                   <div className="w-48">
@@ -330,7 +323,6 @@ export default function FormView() {
 
           </div>
 
-          {/* Footer */}
           <div className="absolute bottom-[25mm] left-[25mm] right-[25mm] border-t border-gray-300 pt-4 text-center">
             <p className="text-[10px] text-gray-400 font-sans">
               Generated by GIA Feedback System. Internal Use Only. © 2025
