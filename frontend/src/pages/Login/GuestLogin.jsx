@@ -137,7 +137,7 @@ export default function GuestLogin() {
             <img src="/gia-logo.PNG" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-3xl font-semibold mb-2">Feedback System</h2>
-          <p className="text-sm opacity-80">Evolve GIA powered by Nucleus</p>
+          <p className="text-sm text-[#D9B64A]">Evolve GIA powered by Nucleus</p>
           <div className="absolute bottom-5 text-xs opacity-40">
             @TeamDigitalizationGIA | v3.0.2
           </div>

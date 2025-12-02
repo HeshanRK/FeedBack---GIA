@@ -9,20 +9,20 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function FormList() {
   const [forms, setForms] = useState([]);
-  const [filteredForms, setFilteredForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [visitorFilter, setVisitorFilter] = useState("all");
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+
+  // --- BRAND COLORS ---
+  const gold = "#D9B64A";
+  const goldHover = "#B9983C";
+  const dark = "#231F20";
+  const lightBg = "#F9F9F9";
 
   useEffect(() => {
     fetchForms();
   }, []);
-
-  useEffect(() => {
-    filterForms();
-  }, [forms, visitorFilter]);
 
   const fetchForms = async () => {
     try {
@@ -34,16 +34,6 @@ export default function FormList() {
       setError(err.response?.data?.message || "Failed to load forms");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const filterForms = () => {
-    if (visitorFilter === "all") {
-      setFilteredForms(forms);
-    } else {
-      setFilteredForms(forms.filter(form => 
-        form.visitor_type === visitorFilter || form.visitor_type === "both"
-      ));
     }
   };
 
@@ -64,28 +54,24 @@ export default function FormList() {
     }
   };
 
-  // NEW: Set active form for guest visitors
   const handleSetActiveGuest = async (formId) => {
     try {
       await axios.post(`${API_BASE_URL}/api/forms/${formId}/set-active-guest`, {}, {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       fetchForms();
-      alert("Active guest form set successfully!");
     } catch (err) {
       console.error("Error setting active guest form:", err);
       alert(err.response?.data?.message || "Failed to set active guest form");
     }
   };
 
-  // NEW: Set active form for internal visitors
   const handleSetActiveInternal = async (formId) => {
     try {
       await axios.post(`${API_BASE_URL}/api/forms/${formId}/set-active-internal`, {}, {
         headers: { Authorization: `Bearer ${getToken()}` }
       });
       fetchForms();
-      alert("Active internal form set successfully!");
     } catch (err) {
       console.error("Error setting active internal form:", err);
       alert(err.response?.data?.message || "Failed to set active internal form");
@@ -101,9 +87,10 @@ export default function FormList() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen py-8" style={{ backgroundColor: lightBg }}>
         <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg">
+          <div className="bg-white border-l-4 border-red-500 text-red-700 px-6 py-4 rounded shadow-md">
+            <h3 className="font-bold">Error</h3>
             {error}
           </div>
         </div>
@@ -112,260 +99,215 @@ export default function FormList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen py-10 px-4 font-sans" style={{ backgroundColor: lightBg }}>
+      <div className="max-w-7xl mx-auto">
+        
+        {/* --- HEADER --- */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-10 border-b border-gray-200 pb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Forms Management</h1>
-            <p className="text-gray-500 mt-2">Create and manage your feedback forms</p>
+            <h1 className="text-4xl font-serif font-bold mb-2" style={{ color: dark }}>
+              Forms Management
+            </h1>
+            <p className="text-gray-500">Create, organize, and manage your feedback systems.</p>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="text-right mr-2">
-              <p className="text-sm text-gray-600">Welcome,</p>
-              <p className="text-sm font-semibold text-gray-800">{user?.username}</p>
-            </div>
-
-            <Link 
-              to="/forms/create" 
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create New Form
-            </Link>
-
-            <Link 
-              to="/reports/download" 
-              className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Download Reports
-            </Link>
-
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* Filter Section */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-              </svg>
-              <h2 className="text-lg font-bold text-gray-800">Filter Forms by Visitor Type</h2>
+          <div className="flex flex-col items-end gap-4 mt-6 md:mt-0">
+            <div className="text-right">
+              <p className="text-xs text-gray-400 uppercase tracking-wider">Logged in as</p>
+              <p className="font-bold text-lg" style={{ color: gold }}>{user?.username}</p>
             </div>
             
-            <div className="flex gap-2">
-              <button
-                onClick={() => setVisitorFilter("all")}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  visitorFilter === "all"
-                    ? "bg-indigo-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+            <div className="flex items-center gap-3">
+               <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-gray-400 hover:text-red-500 text-sm font-semibold transition-colors"
               >
-                All Forms ({forms.length})
+                Logout
               </button>
-              <button
-                onClick={() => setVisitorFilter("guest")}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  visitorFilter === "guest"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+
+              <Link 
+                to="/reports/download" 
+                className="px-5 py-2.5 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                style={{ backgroundColor: dark }}
               >
-                Guest Only ({forms.filter(f => f.visitor_type === "guest" || f.visitor_type === "both").length})
-              </button>
-              <button
-                onClick={() => setVisitorFilter("internal")}
-                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                  visitorFilter === "internal"
-                    ? "bg-green-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Reports
+              </Link>
+
+              <Link 
+                to="/forms/create" 
+                className="px-6 py-2.5 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+                style={{ backgroundColor: gold }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = goldHover}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = gold}
               >
-                Internal Only ({forms.filter(f => f.visitor_type === "internal" || f.visitor_type === "both").length})
-              </button>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Form
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Forms List */}
-        {filteredForms.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-md p-12 text-center">
-            <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        {/* --- FORMS LIST --- */}
+        {forms.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-lg p-16 text-center border-2 border-dashed border-gray-200">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 bg-gray-50">
+              <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              {visitorFilter === "all" ? "No forms yet" : `No ${visitorFilter} forms found`}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {visitorFilter === "all" 
-                ? "Get started by creating your first feedback form" 
-                : `There are no forms available for ${visitorFilter} visitors`}
+            <h3 className="text-2xl font-serif font-bold text-gray-800 mb-2">No forms created yet</h3>
+            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+              Get started by creating a new feedback form for your visitors.
             </p>
-            {visitorFilter === "all" && (
-              <Link 
-                to="/forms/create" 
-                className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-all"
-              >
-                Create Your First Form
-              </Link>
-            )}
+            <Link 
+              to="/forms/create" 
+              className="inline-block px-8 py-3 rounded-lg font-bold text-white shadow-lg transition-transform hover:-translate-y-1"
+              style={{ backgroundColor: gold }}
+            >
+              Create Your First Form
+            </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredForms.map((form) => (
+          <div className="grid gap-6">
+            {forms.map((form) => (
               <div
                 key={form.id}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border border-gray-100"
+                className="group bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 relative overflow-hidden"
               >
-                <div className="flex items-start justify-between">
-                  {/* Left Side - Form Info */}
+                {/* Gold Accent Bar on Left */}
+                <div 
+                  className="absolute left-0 top-0 bottom-0 w-1.5"
+                  style={{ backgroundColor: gold }}
+                ></div>
+
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pl-4">
+                  
+                  {/* LEFT: Form Details */}
                   <div className="flex-1">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <div className="flex items-start gap-5">
+                      {/* Icon */}
+                      <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 bg-gray-50 text-gray-400 group-hover:text-white transition-colors duration-300"
+                           style={{ backgroundColor: "#F5F5F5" }}>
+                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                              style={{ color: dark }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">{form.title}</h3>
-                        <p className="text-gray-500 text-sm mb-3">
+
+                      <div>
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-xl font-bold text-gray-800">{form.title}</h3>
+                          {/* Badge has been removed from here */}
+                        </div>
+
+                        <p className="text-gray-500 text-sm mb-3 line-clamp-1">
                           {form.description || "No description provided"}
                         </p>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="inline-flex items-center gap-2 text-xs text-gray-400">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Created {new Date(form.created_at).toLocaleDateString()}
-                          </span>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                            form.visitor_type === 'both' ? 'bg-indigo-100 text-indigo-600' :
-                            form.visitor_type === 'guest' ? 'bg-blue-100 text-blue-600' :
-                            'bg-green-100 text-green-600'
-                          }`}>
-                            {form.visitor_type === 'both' ? 'All Visitors' : 
-                             form.visitor_type === 'guest' ? 'Guest Only' : 'Internal Only'}
-                          </span>
 
-                          {/* NEW: Active Status Badges */}
-                          {form.is_active_guest && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
-                              ✓ Active for Guests
-                            </span>
-                          )}
-                          {form.is_active_internal && (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white">
-                              ✓ Active for Internal
-                            </span>
+                        <div className="flex items-center gap-4 text-xs text-gray-400">
+                          <span>Created: {new Date(form.created_at).toLocaleDateString()}</span>
+                          
+                          {/* Active Status Indicators */}
+                          {(form.is_active_guest || form.is_active_internal) && (
+                            <div className="flex gap-2">
+                              {form.is_active_guest && (
+                                <span className="flex items-center gap-1 text-green-600 font-bold">
+                                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                  Live (Guest)
+                                </span>
+                              )}
+                              {form.is_active_internal && (
+                                <span className="flex items-center gap-1 text-blue-600 font-bold">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                  Live (Internal)
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Side - Action Buttons */}
-                  <div className="flex flex-col gap-2 ml-4">
-                    {/* Row 1: View, Edit, Responses, Delete */}
-                    <div className="flex gap-2">
-                      <Link 
-                        to={`/forms/${form.id}`} 
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all font-medium text-sm"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        View
-                      </Link>
+                  {/* RIGHT: Action Buttons */}
+                  <div className="flex flex-col gap-3">
+                    
+                    {/* Primary Actions Row */}
+                    <div className="flex items-center gap-2">
                       
                       <Link 
                         to={`/forms/${form.id}/questions`} 
-                        className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-all font-medium text-sm"
+                        className="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg text-sm font-medium transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
                         Edit
                       </Link>
                       
                       <Link 
                         to={`/forms/${form.id}/responses`} 
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all font-medium text-sm"
+                        className="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Responses
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        Data
                       </Link>
-                      
+
                       <button 
                         onClick={() => handleDelete(form.id)} 
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all font-medium text-sm"
+                        className="px-3 py-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Form"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
 
-                    {/* Row 2: Set Active Buttons */}
-                    <div className="flex gap-2">
-                      {/* Set Active for Guest Button */}
+                    {/* Secondary Actions (Activation) Row */}
+                    <div className="flex gap-2 justify-end">
+                      
+                      {/* Guest Activation Button */}
                       {(form.visitor_type === 'guest' || form.visitor_type === 'both') && (
                         <button
                           onClick={() => handleSetActiveGuest(form.id)}
                           disabled={form.is_active_guest}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm ${
+                          className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded border transition-all ${
                             form.is_active_guest
-                              ? 'bg-blue-600 text-white cursor-not-allowed'
-                              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                              ? `bg-gray-100 text-gray-400 cursor-not-allowed border-transparent`
+                              : `border-gray-200 text-gray-500 hover:border-[${gold}] hover:text-[${gold}]`
                           }`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          {form.is_active_guest ? 'Active for Guests' : 'Set Active for Guests'}
+                          {form.is_active_guest ? (
+                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                             </svg>
+                          ) : null}
+                          {form.is_active_guest ? 'Active (Guest)' : 'Set Active (Guest)'}
                         </button>
                       )}
 
-                      {/* Set Active for Internal Button */}
+                      {/* Internal Activation Button */}
                       {(form.visitor_type === 'internal' || form.visitor_type === 'both') && (
                         <button
                           onClick={() => handleSetActiveInternal(form.id)}
                           disabled={form.is_active_internal}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium text-sm ${
+                          className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded border transition-all ${
                             form.is_active_internal
-                              ? 'bg-green-600 text-white cursor-not-allowed'
-                              : 'bg-green-50 text-green-600 hover:bg-green-100'
+                              ? `bg-gray-100 text-gray-400 cursor-not-allowed border-transparent`
+                              : `border-gray-200 text-gray-500 hover:border-[${gold}] hover:text-[${gold}]`
                           }`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-                          </svg>
-                          {form.is_active_internal ? 'Active for Internal' : 'Set Active for Internal'}
+                          {form.is_active_internal ? (
+                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                             </svg>
+                          ) : null}
+                          {form.is_active_internal ? 'Active (Internal)' : 'Set Active (Internal)'}
                         </button>
                       )}
                     </div>
+
                   </div>
                 </div>
               </div>

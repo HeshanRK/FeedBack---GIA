@@ -1,16 +1,14 @@
 import { useState } from "react";
-import { guestLogin } from "../../api/visitorApi";
+import { internalLogin } from "../../api/visitorApi";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../config/api";
 
-export default function GuestLogin() {
+export default function InternalLogin() {
+  const [id_number, setId] = useState("");
   const [name, setName] = useState("");
-  const [organization, setOrganization] = useState("");
-  const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [exiting, setExiting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -23,35 +21,37 @@ export default function GuestLogin() {
       setLoading(true);
       setError("");
       
+      if (!id_number.trim()) {
+        setError("ID Number is required");
+        setLoading(false);
+        return;
+      }
+      
       if (!name.trim()) {
         setError("Name is required");
         setLoading(false);
         return;
       }
 
-      const res = await guestLogin({ name, organization, purpose });
+      // 1. Perform Login
+      const res = await internalLogin({ id_number, name });
       localStorage.setItem("visitorId", res.visitorId);
-      localStorage.setItem("visitorType", "guest");
+      localStorage.setItem("visitorType", "internal");
       
+      // 2. CHECK FOR ACTIVE FORM
       try {
-        const activeFormRes = await axios.get(`${API_BASE_URL}/api/forms/active/guest`);
+        const activeFormRes = await axios.get(`${API_BASE_URL}/api/forms/active/internal`);
         const activeForm = activeFormRes.data;
-        
-        // Trigger exit animation
-        setExiting(true);
-        
-        // Wait for animation to complete before navigating
-        setTimeout(() => {
-          navigate(`/forms/${activeForm.id}`);
-        }, 500); // 500ms matches animation duration
-        
+        navigate(`/forms/${activeForm.id}`);
+
       } catch (formErr) {
-        console.error("Error fetching active form:", formErr);
-        setError("No feedback form is currently available for guest visitors. Please contact the administrator.");
-        setLoading(false);
+        // FIX: We use 'formErr' in the console.log so ESLint knows it's being used
+        console.log("No active internal form found, redirecting...", formErr);
+        navigate("/forms/select");
       }
+
     } catch (err) {
-      console.error("Guest login error:", err);
+      console.error("Internal login error:", err);
       setError(err.response?.data?.message || "Failed to login. Please try again.");
       setLoading(false);
     }
@@ -59,39 +59,7 @@ export default function GuestLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
-      
-      <style>{`
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes slideOutLeft {
-          from {
-            opacity: 1;
-            transform: translateX(0) scale(1);
-          }
-          to {
-            opacity: 0;
-            transform: translateX(-50px) scale(0.95);
-          }
-        }
-        
-        .page-enter {
-          animation: slideInRight 0.5s ease-out forwards;
-        }
-        
-        .page-exit {
-          animation: slideOutLeft 0.5s ease-out forwards;
-        }
-      `}</style>
-
+      {/* Background Layers */}
       <div 
         className="absolute inset-0 z-0"
         style={{ 
@@ -114,14 +82,11 @@ export default function GuestLogin() {
         }}
       />
 
-      <div className={`relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex ${exiting ? 'page-exit' : 'page-enter'}`}>
+      <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex">
+        {/* Left Side */}
         <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
-            <img 
-              src="/gia-logo.PNG" 
-              alt="Logo" 
-              className="w-full h-full object-contain" 
-            />
+            <img src="/gia-logo.PNG" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-3xl font-semibold mb-2">Feedback System</h2>
           <p className="text-sm opacity-80">Evolve GIA powered by Nucleus</p>
@@ -130,13 +95,14 @@ export default function GuestLogin() {
           </div>
         </div>
 
+        {/* Right Side */}
         <div className="w-1/2 flex flex-col justify-center px-16 relative">
           <div className="absolute top-0 right-0 w-24 h-2" style={{ backgroundColor: gold }}></div>
 
           <h1 className="text-4xl font-bold mb-1" style={{ color: dark }}>
             Feedback<span style={{ color: gold }}>GIA</span>
           </h1>
-          <p className="text-gray-500 mb-8">Guest Visitor Login</p>
+          <p className="text-gray-500 mb-8">Internal Visitor Login</p>
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
@@ -145,6 +111,21 @@ export default function GuestLogin() {
           )}
 
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
+                ID Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
+                onFocus={(e) => e.target.style.borderColor = gold}
+                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
+                placeholder="Enter ID number"
+                value={id_number}
+                onChange={(e) => setId(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
                 Your Name <span className="text-red-500">*</span>
@@ -156,36 +137,6 @@ export default function GuestLogin() {
                 placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
-                Organization (Optional)
-              </label>
-              <input
-                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
-                onFocus={(e) => e.target.style.borderColor = gold}
-                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
-                placeholder="Enter organization"
-                value={organization}
-                onChange={(e) => setOrganization(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
-                Purpose (Optional)
-              </label>
-              <input
-                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
-                onFocus={(e) => e.target.style.borderColor = gold}
-                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
-                placeholder="Enter purpose"
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
                 disabled={loading}
               />
             </div>
@@ -206,7 +157,6 @@ export default function GuestLogin() {
               className="w-full text-gray-400 text-sm transition-colors mt-3"
               onMouseOver={(e) => (e.currentTarget.style.color = gold)}
               onMouseOut={(e) => (e.currentTarget.style.color = "#9CA3AF")}
-              disabled={loading}
             >
               ← Back to Login Options
             </button>
