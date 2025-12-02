@@ -22,9 +22,16 @@ export default function GuestLogin() {
     try {
       setLoading(true);
       setError("");
-      
+
+      // Mandatory fields
       if (!name.trim()) {
         setError("Name is required");
+        setLoading(false);
+        return;
+      }
+
+      if (!organization.trim()) {
+        setError("Organization is required");
         setLoading(false);
         return;
       }
@@ -32,22 +39,23 @@ export default function GuestLogin() {
       const res = await guestLogin({ name, organization, purpose });
       localStorage.setItem("visitorId", res.visitorId);
       localStorage.setItem("visitorType", "guest");
-      
+
       try {
         const activeFormRes = await axios.get(`${API_BASE_URL}/api/forms/active/guest`);
         const activeForm = activeFormRes.data;
-        
-        // Trigger exit animation
+
+        // Exit animation
         setExiting(true);
-        
-        // Wait for animation to complete before navigating
+
         setTimeout(() => {
           navigate(`/forms/${activeForm.id}`);
-        }, 500); // 500ms matches animation duration
-        
+        }, 500);
+
       } catch (formErr) {
         console.error("Error fetching active form:", formErr);
-        setError("No feedback form is currently available for guest visitors. Please contact the administrator.");
+        setError(
+          "No feedback form is currently available for guest visitors. Please contact the administrator."
+        );
         setLoading(false);
       }
     } catch (err) {
@@ -58,8 +66,10 @@ export default function GuestLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
-      
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans"
+      style={{ backgroundColor: "#F9F9F9" }}
+    >
       <style>{`
         @keyframes slideInRight {
           from {
@@ -92,36 +102,39 @@ export default function GuestLogin() {
         }
       `}</style>
 
-      <div 
+      <div
         className="absolute inset-0 z-0"
-        style={{ 
-          backgroundImage: `radial-gradient(${gold}40 1px, transparent 1px)`, 
-          backgroundSize: "30px 30px" 
+        style={{
+          backgroundImage: `radial-gradient(${gold}40 1px, transparent 1px)`,
+          backgroundSize: "30px 30px",
         }}
       ></div>
 
       <img
-        src="/gia-logo2.PNG" 
+        src="/gia-logo2.PNG"
         alt="GIA Watermark"
         className="absolute z-0 pointer-events-none"
         style={{
-          width: "2500px", 
-          opacity: 0.08, 
+          width: "2500px",
+          opacity: 0.08,
           top: "50%",
           left: "50%",
-          transform: "translate(-50%, -50%)", 
-          filter: "grayscale(100%)" 
+          transform: "translate(-50%, -50%)",
+          filter: "grayscale(100%)",
         }}
       />
 
-      <div className={`relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex ${exiting ? 'page-exit' : 'page-enter'}`}>
-        <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
+      <div
+        className={`relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex ${
+          exiting ? "page-exit" : "page-enter"
+        }`}
+      >
+        <div
+          className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative"
+          style={{ backgroundColor: dark }}
+        >
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
-            <img 
-              src="/gia-logo2.PNG" 
-              alt="Logo" 
-              className="w-full h-full object-contain" 
-            />
+            <img src="/gia-logo.PNG" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-3xl font-semibold mb-2">Feedback System</h2>
           <p className="text-sm opacity-80">Evolve GIA powered by Nucleus</p>
@@ -145,14 +158,15 @@ export default function GuestLogin() {
           )}
 
           <div className="space-y-4">
+            {/* Name */}
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
                 Your Name <span className="text-red-500">*</span>
               </label>
               <input
                 className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
-                onFocus={(e) => e.target.style.borderColor = gold}
-                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
+                onFocus={(e) => (e.target.style.borderColor = gold)}
+                onBlur={(e) => (e.target.style.borderColor = "#E5E7EB")}
                 placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -160,14 +174,15 @@ export default function GuestLogin() {
               />
             </div>
 
+            {/* Organization - MANDATORY NOW */}
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
-                Organization (Optional)
+                Organization <span className="text-red-500">*</span>
               </label>
               <input
                 className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
-                onFocus={(e) => e.target.style.borderColor = gold}
-                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
+                onFocus={(e) => (e.target.style.borderColor = gold)}
+                onBlur={(e) => (e.target.style.borderColor = "#E5E7EB")}
                 placeholder="Enter organization"
                 value={organization}
                 onChange={(e) => setOrganization(e.target.value)}
@@ -175,14 +190,15 @@ export default function GuestLogin() {
               />
             </div>
 
+            {/* Purpose - Optional */}
             <div>
               <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
                 Purpose (Optional)
               </label>
               <input
                 className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
-                onFocus={(e) => e.target.style.borderColor = gold}
-                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
+                onFocus={(e) => (e.target.style.borderColor = gold)}
+                onBlur={(e) => (e.target.style.borderColor = "#E5E7EB")}
                 placeholder="Enter purpose"
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
@@ -190,8 +206,8 @@ export default function GuestLogin() {
               />
             </div>
 
-            <button 
-              onClick={submit} 
+            <button
+              onClick={submit}
               className="w-full text-white py-4 px-6 rounded-lg font-semibold transition-all disabled:opacity-50 shadow-md hover:shadow-xl"
               style={{ backgroundColor: gold }}
               onMouseOver={(e) => !loading && (e.currentTarget.style.backgroundColor = goldHover)}

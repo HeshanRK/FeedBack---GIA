@@ -92,7 +92,7 @@ export default function VisitorSelect() {
           {/* --- LOGO CIRCLE --- */}
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg transform transition-transform hover:scale-105 duration-500">
             <img 
-              src="/gia-logo2.PNG" 
+              src="/gia-logo.PNG" 
               alt="Logo" 
               className="w-full h-full object-contain" 
             />

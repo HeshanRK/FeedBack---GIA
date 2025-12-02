@@ -118,7 +118,7 @@ export default function GuestLogin() {
         <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
           <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
             <img 
-              src="/gia-logo2.PNG" 
+              src="/gia-logo.PNG" 
               alt="Logo" 
               className="w-full h-full object-contain" 
             />

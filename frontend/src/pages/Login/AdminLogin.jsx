@@ -78,7 +78,7 @@ export default function AdminLogin() {
       ></div>
 
       <img
-        src="/gia-logo2.PNG" 
+        src="/gia-logo.PNG" 
         alt="GIA Watermark"
         className="absolute z-0 pointer-events-none"
         style={{
