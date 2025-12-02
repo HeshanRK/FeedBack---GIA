@@ -3,6 +3,7 @@ import { AnswerModel } from "../models/answerModel.js";
 import { QuestionModel } from "../models/questionModel.js";
 import { VisitorModel } from "../models/visitorModel.js";
 import { generatePdfFromResponse } from "../utils/pdfGenerator.js";
+import { generateFeedbackExcel } from "../utils/excelGenerator.js";
 
 export const submitResponse = async (req, res, next) => {
   try {
@@ -123,6 +124,87 @@ export const getResponseDetails = async (req, res, next) => {
     res.json(answers);
   } catch (err) {
     console.error("Error fetching response details:", err);
+    next(err);
+  }
+};
+
+export const downloadAllResponses = async (req, res, next) => {
+  try {
+    const { startDate, endDate, formId } = req.query;
+
+    let query = `
+      SELECT 
+        r.id,
+        r.submitted_at,
+        f.title AS form_title,
+        v.name AS visitor_name,
+        v.type AS visitor_type,
+        v.organization,
+        v.id_number,
+        v.purpose
+      FROM responses r
+      LEFT JOIN visitors v ON r.visitor_id = v.id
+      LEFT JOIN forms f ON r.form_id = f.id
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (formId) {
+      query += " AND r.form_id = ?";
+      params.push(formId);
+    }
+
+    if (startDate) {
+      query += " AND DATE(r.submitted_at) >= ?";
+      params.push(startDate);
+    }
+
+    if (endDate) {
+      query += " AND DATE(r.submitted_at) <= ?";
+      params.push(endDate);
+    }
+
+    query += " ORDER BY r.submitted_at DESC";
+
+    const { pool } = await import("../config/db.js");
+    const [responses] = await pool.query(query, params);
+
+    if (responses.length === 0) {
+      return res.status(404).json({
+        message: "No responses found for the selected criteria",
+      });
+    }
+
+    // ⭐ Fetch answers WITH q_text
+    const responsesWithAnswers = await Promise.all(
+      responses.map(async (response) => {
+        const answers = await AnswerModel.findByResponseIdWithQuestions(
+          response.id
+        );
+
+        return {
+          ...response,
+          answers,
+        };
+      })
+    );
+
+    // Create Excel File
+    const workbook = await generateFeedbackExcel(responsesWithAnswers);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    res.writeHead(200, {
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename=FeedbackGIA_Report_${Date.now()}.xlsx`,
+      "Content-Length": buffer.length,
+    });
+
+    res.end(buffer);
+  } catch (err) {
+    console.error("Error downloading responses:", err);
     next(err);
   }
 };

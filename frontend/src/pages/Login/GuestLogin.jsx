@@ -11,6 +11,10 @@ export default function GuestLogin() {
 
   const navigate = useNavigate();
 
+  const gold = "#D9B64A";
+  const goldHover = "#B9983C";
+  const dark = "#231F20";
+
   const submit = async () => {
   try {
     setLoading(true);
@@ -37,24 +41,54 @@ export default function GuestLogin() {
 };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans" style={{ backgroundColor: "#F9F9F9" }}>
+      {/* --- BACKGROUND LAYER 1: Gold Dot Grid --- */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{ 
+          backgroundImage: `radial-gradient(${gold}40 1px, transparent 1px)`, 
+          backgroundSize: "30px 30px" 
+        }}
+      ></div>
+
+      {/* --- BACKGROUND LAYER 2: Giant GIA Logo Watermark --- */}
+      <img
+        src="/gia-logo.PNG" 
+        alt="GIA Watermark"
+        className="absolute z-0 pointer-events-none"
+        style={{
+          width: "2500px", 
+          opacity: 0.08, 
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)", 
+          filter: "grayscale(100%)" 
+        }}
+      />
+
+      <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden w-[900px] h-[550px] flex">
         {/* Left Side - Branding */}
-        <div className="w-1/2 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white flex flex-col justify-center items-center p-10 relative">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-5 text-3xl">
-            📋
+        <div className="w-1/2 text-white flex flex-col justify-center items-center p-10 relative" style={{ backgroundColor: dark }}>
+          <div className="w-24 h-24 rounded-full flex items-center justify-center mb-5 overflow-hidden bg-white p-3 shadow-lg">
+            <img 
+              src="/gia-logo.PNG" 
+              alt="Logo" 
+              className="w-full h-full object-contain" 
+            />
           </div>
           <h2 className="text-3xl font-semibold mb-2">Feedback System</h2>
-          <p className="text-sm opacity-80">Help us improve GIA factory processes.</p>
-          <div className="absolute bottom-5 text-xs opacity-60">
-            @TeamDigitalizationGIA | Feedback System | v1.0.0
+          <p className="text-sm opacity-80">Evolve GIA powered by Nucleus</p>
+          <div className="absolute bottom-5 text-xs opacity-40">
+            @TeamDigitalizationGIA | v3.0.2
           </div>
         </div>
 
         {/* Right Side - Guest Form */}
-        <div className="w-1/2 flex flex-col justify-center px-16">
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">
-            Feedback<span className="text-indigo-600">GIA</span>
+        <div className="w-1/2 flex flex-col justify-center px-16 relative">
+          <div className="absolute top-0 right-0 w-24 h-2" style={{ backgroundColor: gold }}></div>
+
+          <h1 className="text-4xl font-bold mb-1" style={{ color: dark }}>
+            Feedback<span style={{ color: gold }}>GIA</span>
           </h1>
           <p className="text-gray-500 mb-8">Guest Visitor Login</p>
 
@@ -66,11 +100,13 @@ export default function GuestLogin() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-gray-700 text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
                 Your Name <span className="text-red-500">*</span>
               </label>
               <input
-                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none focus:border-indigo-500 bg-gray-50"
+                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
+                onFocus={(e) => e.target.style.borderColor = gold}
+                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
                 placeholder="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -79,11 +115,13 @@ export default function GuestLogin() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
                 Organization (Optional)
               </label>
               <input
-                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none focus:border-indigo-500 bg-gray-50"
+                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
+                onFocus={(e) => e.target.style.borderColor = gold}
+                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
                 placeholder="Enter organization"
                 value={organization}
                 onChange={(e) => setOrganization(e.target.value)}
@@ -92,11 +130,13 @@ export default function GuestLogin() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2" style={{ color: dark }}>
                 Purpose (Optional)
               </label>
               <input
-                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none focus:border-indigo-500 bg-gray-50"
+                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:outline-none bg-gray-50 transition-all"
+                onFocus={(e) => e.target.style.borderColor = gold}
+                onBlur={(e) => e.target.style.borderColor = "#E5E7EB"}
                 placeholder="Enter purpose"
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
@@ -106,7 +146,10 @@ export default function GuestLogin() {
 
             <button 
               onClick={submit} 
-              className="w-full bg-indigo-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50"
+              className="w-full text-white py-4 px-6 rounded-lg font-semibold transition-all disabled:opacity-50 shadow-md hover:shadow-xl"
+              style={{ backgroundColor: gold }}
+              onMouseOver={(e) => !loading && (e.currentTarget.style.backgroundColor = goldHover)}
+              onMouseOut={(e) => !loading && (e.currentTarget.style.backgroundColor = gold)}
               disabled={loading}
             >
               {loading ? "Loading..." : "Continue"}
@@ -114,7 +157,9 @@ export default function GuestLogin() {
 
             <button
               onClick={() => navigate("/")}
-              className="w-full text-gray-400 text-sm hover:text-indigo-600 transition-colors mt-3"
+              className="w-full text-gray-400 text-sm transition-colors mt-3"
+              onMouseOver={(e) => (e.currentTarget.style.color = gold)}
+              onMouseOut={(e) => (e.currentTarget.style.color = "#9CA3AF")}
             >
               ← Back to Login Options
             </button>

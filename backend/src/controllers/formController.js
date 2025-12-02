@@ -67,6 +67,43 @@ export const getFormById = async (req, res, next) => {
   }
 };
 
+export const updateForm = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: "Invalid form ID" });
+    }
+    
+    const { title, description, visitor_type } = req.body;
+    
+    if (!title || title.trim() === "") {
+      return res.status(400).json({ message: "Title is required" });
+    }
+    
+    if (title.length > 255) {
+      return res.status(400).json({ message: "Title must be less than 255 characters" });
+    }
+
+    // Validate visitor_type
+    const validTypes = ['guest', 'internal', 'both'];
+    if (visitor_type && !validTypes.includes(visitor_type)) {
+      return res.status(400).json({ message: "visitor_type must be 'guest', 'internal', or 'both'" });
+    }
+    
+    await FormModel.update(id, {
+      title: title.trim(),
+      description: description?.trim() || null,
+      visitor_type: visitor_type || 'both'
+    });
+    
+    res.json({ ok: true, message: "Form updated successfully" });
+  } catch (err) {
+    console.error("Error updating form:", err);
+    next(err);
+  }
+};
+
 export const deleteForm = async (req, res, next) => {
   try {
     const id = req.params.id;

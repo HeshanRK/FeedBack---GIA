@@ -1,7 +1,16 @@
 import { useState } from "react";
 import OptionInput from "./OptionInput";
 
-export default function QuestionEditor({ question, onChange, onDelete }) {
+export default function QuestionEditor({ 
+  question, 
+  onChange, 
+  onDelete, 
+  onMoveUp, 
+  onMoveDown, 
+  canMoveUp, 
+  canMoveDown,
+  questionNumber 
+}) {
   const [local, setLocal] = useState(question);
 
   const update = (field, value) => {
@@ -28,6 +37,43 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
 
   return (
     <div className="border p-4 rounded bg-gray-50 mb-4 shadow-sm">
+      {/* Question Number and Move Buttons */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
+            {questionNumber}
+          </span>
+          <span className="text-gray-600 font-semibold">Question {questionNumber}</span>
+        </div>
+        
+        {/* Move Up/Down Buttons */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            className="p-2 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all"
+            title="Move Up"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+          </button>
+          
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            className="p-2 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all"
+            title="Move Down"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <input
         className="border p-2 w-full mb-3"
         placeholder="Question text"
@@ -64,8 +110,9 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
           ))}
 
           <button
+            type="button"
             onClick={addOption}
-            className="text-blue-600 mt-2"
+            className="text-blue-600 mt-2 hover:text-blue-700"
           >
             + Add Option
           </button>
@@ -83,8 +130,9 @@ export default function QuestionEditor({ question, onChange, onDelete }) {
         </label>
 
         <button
+          type="button"
           onClick={onDelete}
-          className="text-red-600"
+          className="text-red-600 hover:text-red-700 font-semibold"
         >
           Delete
         </button>

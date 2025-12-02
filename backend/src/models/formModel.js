@@ -29,6 +29,14 @@ export const FormModel = {
     return rows[0];
   },
 
+  // NEW UPDATE FUNCTION
+  async update(id, { title, description, visitor_type }) {
+    await pool.query(
+      "UPDATE forms SET title = ?, description = ?, visitor_type = ? WHERE id = ?",
+      [title, description, visitor_type, id]
+    );
+  },
+
   async delete(id) {
     // Delete all questions first (cascade)
     await pool.query("DELETE FROM questions WHERE form_id = ?", [id]);
