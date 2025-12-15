@@ -15,7 +15,6 @@ export default function FormView() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // --- BRAND COLORS ---
   const gold = "#D9B64A";
   const goldHover = "#B9983C";
   const dark = "#231F20";
@@ -29,12 +28,21 @@ export default function FormView() {
         setLoading(true);
         const data = await getFormById(id);
         setForm(data);
-        setAnswers(
-          data.questions.map((q) => ({
+        
+        const initialAnswers = data.questions.map((q) => {
+          if (q.subQuestions && q.subQuestions.length > 0) {
+            return {
+              question_id: q.id,
+              value: {}
+            };
+          }
+          return {
             question_id: q.id,
-            value: q.q_type === "checkbox" ? [] : "",
-          }))
-        );
+            value: q.q_type === "checkbox" ? [] : ""
+          };
+        });
+        
+        setAnswers(initialAnswers);
       } catch (err) {
         console.error("Error fetching form:", err);
         setError(err.response?.data?.message || "Failed to load form");
@@ -56,16 +64,29 @@ export default function FormView() {
     if (!form) return false;
 
     for (const question of form.questions) {
-      if (question.required) {
-        const answer = answers.find((a) => a.question_id === question.id);
-        if (
-          !answer ||
-          !answer.value ||
-          (Array.isArray(answer.value) && answer.value.length === 0) ||
-          (typeof answer.value === "string" && answer.value.trim() === "")
-        ) {
-          setError(`Please answer the required question: "${question.q_text}"`);
-          return false;
+      const answer = answers.find((a) => a.question_id === question.id);
+      
+      if (question.subQuestions && question.subQuestions.length > 0) {
+        for (const subQ of question.subQuestions) {
+          if (subQ.required) {
+            const subAnswer = answer?.value?.[subQ.id];
+            if (!subAnswer || (typeof subAnswer === "string" && subAnswer.trim() === "")) {
+              setError(`Please answer the required sub-question: "${question.q_text} - ${subQ.sub_question_label}"`);
+              return false;
+            }
+          }
+        }
+      } else {
+        if (question.required) {
+          if (
+            !answer ||
+            !answer.value ||
+            (Array.isArray(answer.value) && answer.value.length === 0) ||
+            (typeof answer.value === "string" && answer.value.trim() === "")
+          ) {
+            setError(`Please answer the required question: "${question.q_text}"`);
+            return false;
+          }
         }
       }
     }
@@ -86,7 +107,25 @@ export default function FormView() {
       }
 
       setSubmitting(true);
-      await submitResponse(id, { visitorId, answers });
+      
+      const answersToSubmit = [];
+      
+      for (const answer of answers) {
+        const question = form.questions.find(q => q.id === answer.question_id);
+        
+        if (question?.subQuestions && question.subQuestions.length > 0) {
+          for (const subQ of question.subQuestions) {
+            answersToSubmit.push({
+              question_id: subQ.id,
+              value: answer.value[subQ.id] || null
+            });
+          }
+        } else {
+          answersToSubmit.push(answer);
+        }
+      }
+      
+      await submitResponse(id, { visitorId, answers: answersToSubmit });
       
       setSuccess(true);
 
@@ -143,7 +182,6 @@ export default function FormView() {
   return (
     <div className="min-h-screen py-12 px-4 font-serif" style={{ backgroundColor: lightBg }}>
       <style>{`
-        /* Paper Line Inputs - Updated with GOLD Focus */
         .paper-theme input[type="text"], 
         .paper-theme input[type="email"], 
         .paper-theme input[type="number"], 
@@ -172,7 +210,6 @@ export default function FormView() {
             font-size: 0.85rem !important;
         }
 
-        /* Animations remain same */
         @keyframes fadeInScale {
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
@@ -211,10 +248,29 @@ export default function FormView() {
           </button>
         )}
 
-        <div className="bg-white shadow-2xl relative mx-auto max-w-[210mm] min-h-[297mm] p-[25mm] transition-all duration-500 form-entrance">
-          
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-            <img src="/gia-logo2.PNG" alt="Watermark" className="w-[400px] opacity-[0.06]" />
+        <div className="shadow-2xl relative mx-auto max-w-[210mm] min-h-[297mm] p-[25mm] transition-all duration-500 form-entrance" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
+  
+          <div 
+            className="fixed pointer-events-none"
+            style={{
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 999,
+              width: '500px',
+              height: '500px'
+            }}
+          >
+            <img 
+              src="/gia-logo2.PNG" 
+              alt="Watermark" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                opacity: 0.08
+              }}
+            />
           </div>
 
           <div className="relative z-10 flex justify-between items-end border-b-2 border-black pb-6 mb-10">
@@ -236,7 +292,6 @@ export default function FormView() {
             {success ? (
               <div className="flex flex-col items-center justify-center pt-20 text-center">
                 
-                {/* Gold Success Circle */}
                 <div 
                   className="w-28 h-28 rounded-full flex items-center justify-center mb-8 shadow-xl anim-circle"
                   style={{ backgroundColor: gold }}
@@ -260,7 +315,7 @@ export default function FormView() {
                   <p className="text-lg text-gray-600 font-sans leading-relaxed mb-8">
                     Thank you for taking the time to share your feedback. Your comments are valuable and help us improve our services.
                     <br />
-                    <span className="font-bold mt-4 block text-xl font-serif" style={{ color: gold }}>– GIA Team</span>
+                    <span className="font-bold mt-4 block text-xl font-serif" style={{ color: gold }}>— GIA Team</span>
                   </p>
                 </div>
 
@@ -322,7 +377,7 @@ export default function FormView() {
 
           </div>
 
-          <div className="absolute bottom-[25mm] left-[25mm] right-[25mm] border-t border-gray-300 pt-4 text-center">
+          <div className="relative z-10 border-t border-gray-300 pt-4 text-center mt-10">
             <p className="text-[10px] text-gray-400 font-sans">
               Generated by GIA Feedback System. Internal Use Only. © 2025
             </p>

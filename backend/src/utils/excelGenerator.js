@@ -2,13 +2,10 @@ import ExcelJS from 'exceljs';
 
 export async function generateFeedbackExcel(responses) {
   const workbook = new ExcelJS.Workbook();
-
-  // ========== ONE SHEET WITH ALL USERS ==========
   const mainSheet = workbook.addWorksheet('All Feedback Responses');
 
   let currentRow = 1;
 
-  // Process each response (each user)
   responses.forEach((response, userIndex) => {
     // ===== USER HEADER SECTION (GIA GOLD & BLACK) =====
     mainSheet.mergeCells(currentRow, 1, currentRow, 3);
@@ -18,12 +15,11 @@ export async function generateFeedbackExcel(responses) {
     userHeaderCell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF1F2937' } // GIA Black
+      fgColor: { argb: 'FF1F2937' }
     };
     userHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' };
     mainSheet.getRow(currentRow).height = 30;
     
-    // Add borders to merged header
     [1, 2, 3].forEach(col => {
       mainSheet.getCell(currentRow, col).border = {
         top: { style: 'thin' },
@@ -54,10 +50,9 @@ export async function generateFeedbackExcel(responses) {
       mainSheet.getCell(currentRow, 1).fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFFEF3C7' } // Light Gold
+        fgColor: { argb: 'FFFEF3C7' }
       };
       
-      // Add borders to info rows
       [1, 2, 3].forEach(col => {
         mainSheet.getCell(currentRow, col).border = {
           top: { style: 'thin' },
@@ -77,14 +72,13 @@ export async function generateFeedbackExcel(responses) {
     mainSheet.getCell(currentRow, 2).value = 'Question';
     mainSheet.getCell(currentRow, 3).value = 'Answer';
     
-    // Apply GIA brand colors
     [1, 2, 3].forEach(col => {
       const cell = mainSheet.getCell(currentRow, col);
       cell.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFC9A961' } // GIA Gold
+        fgColor: { argb: 'FFC9A961' }
       };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       cell.border = {
@@ -98,56 +92,61 @@ export async function generateFeedbackExcel(responses) {
     mainSheet.getRow(currentRow).height = 25;
     currentRow++;
 
+    // ===== GROUP ANSWERS BY PARENT (for sub-questions) =====
+    const groupedAnswers = groupAnswersByParent(response.answers || []);
+
     // ===== QUESTIONS AND ANSWERS =====
-    if (response.answers && response.answers.length > 0) {
-      response.answers.forEach((answer, qIndex) => {
+    if (groupedAnswers && groupedAnswers.length > 0) {
+      groupedAnswers.forEach((item, qIndex) => {
         // Question number (GIA Black)
         mainSheet.getCell(currentRow, 1).value = qIndex + 1;
         mainSheet.getCell(currentRow, 1).alignment = { horizontal: 'center', vertical: 'top' };
         mainSheet.getCell(currentRow, 1).font = { bold: true, size: 11, color: { argb: 'FF1F2937' } };
 
         // Question text (Bold Black)
-        mainSheet.getCell(currentRow, 2).value = answer.q_text || 'Question';
+        mainSheet.getCell(currentRow, 2).value = item.q_text || 'Question';
         mainSheet.getCell(currentRow, 2).alignment = { wrapText: true, vertical: 'top' };
         mainSheet.getCell(currentRow, 2).font = { bold: true, color: { argb: 'FF1F2937' } };
 
-        // ===== FIX ANSWER VALUE - Remove JSON brackets =====
-        let answerValue = '';
-        
-        if (answer.value === null || answer.value === undefined) {
-          answerValue = 'No answer provided';
-        } else if (Array.isArray(answer.value)) {
-          answerValue = answer.value.join(', ');
-        } else if (typeof answer.value === 'string') {
-          try {
-            const parsed = JSON.parse(answer.value);
-            if (Array.isArray(parsed)) {
-              answerValue = parsed.join(', ');
-            } else if (typeof parsed === 'object') {
-              answerValue = JSON.stringify(parsed);
-            } else {
-              answerValue = String(parsed);
+        // ===== HANDLE SUB-QUESTIONS =====
+        if (item.subAnswers && item.subAnswers.length > 0) {
+          // For sub-questions, create a formatted string with all sub-answers
+          let subAnswersText = '';
+          item.subAnswers.forEach((subAnswer, idx) => {
+            const subValue = formatAnswerValue(subAnswer.value);
+            subAnswersText += `${subAnswer.sub_question_label}: ${subValue}`;
+            if (idx < item.subAnswers.length - 1) {
+              subAnswersText += '\n';
             }
-          } catch {
-            answerValue = answer.value;
-          }
-        } else if (typeof answer.value === 'object') {
-          answerValue = JSON.stringify(answer.value);
+          });
+
+          mainSheet.getCell(currentRow, 3).value = subAnswersText;
+          mainSheet.getCell(currentRow, 3).alignment = { wrapText: true, vertical: 'top' };
+          mainSheet.getCell(currentRow, 3).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFFBF0' }
+          };
+
+          // Adjust row height for sub-answers
+          const lineCount = item.subAnswers.length;
+          mainSheet.getRow(currentRow).height = Math.max(30, lineCount * 20);
         } else {
-          answerValue = String(answer.value);
+          // Regular answer (no sub-questions)
+          const answerValue = formatAnswerValue(item.value);
+          mainSheet.getCell(currentRow, 3).value = answerValue;
+          mainSheet.getCell(currentRow, 3).alignment = { wrapText: true, vertical: 'top' };
+          mainSheet.getCell(currentRow, 3).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFFFBF0' }
+          };
+
+          const minHeight = Math.max(30, Math.ceil(answerValue.length / 50) * 15);
+          mainSheet.getRow(currentRow).height = minHeight;
         }
 
-        mainSheet.getCell(currentRow, 3).value = answerValue;
-        mainSheet.getCell(currentRow, 3).alignment = { wrapText: true, vertical: 'top' };
-        
-        // Light gold background for answer
-        mainSheet.getCell(currentRow, 3).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFFFFBF0' } // Very light gold/cream
-        };
-
-        // Add borders ONLY to columns 1, 2, 3
+        // Add borders to all cells
         [1, 2, 3].forEach(col => {
           mainSheet.getCell(currentRow, col).border = {
             top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
@@ -157,10 +156,6 @@ export async function generateFeedbackExcel(responses) {
           };
         });
 
-        // Adjust row height based on content
-        const minHeight = Math.max(30, Math.ceil(answerValue.length / 50) * 15);
-        mainSheet.getRow(currentRow).height = minHeight;
-
         currentRow++;
       });
     } else {
@@ -169,7 +164,6 @@ export async function generateFeedbackExcel(responses) {
       mainSheet.getCell(currentRow, 1).alignment = { horizontal: 'center', vertical: 'middle' };
       mainSheet.getCell(currentRow, 1).font = { italic: true, color: { argb: 'FF6B7280' } };
       
-      // Add borders to "no answers" row
       [1, 2, 3].forEach(col => {
         mainSheet.getCell(currentRow, col).border = {
           top: { style: 'thin' },
@@ -195,7 +189,7 @@ export async function generateFeedbackExcel(responses) {
   footerCell.fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FFFEF3C7' } // Light Gold
+    fgColor: { argb: 'FFFEF3C7' }
   };
 
   // ===== AUTO-SIZE ONLY 3 COLUMNS =====
@@ -210,15 +204,85 @@ export async function generateFeedbackExcel(responses) {
       }
     });
     
-    // Set column width with min and max limits
     if (colIndex === 1) {
-      // Column A (number column) - smaller
       column.width = Math.min(Math.max(maxLength + 2, 5), 10);
     } else {
-      // Columns B and C - auto-size with reasonable limits
       column.width = Math.min(Math.max(maxLength + 2, 20), 80);
     }
   });
 
   return workbook;
+}
+
+// Helper function to group answers by parent question
+function groupAnswersByParent(answers) {
+  const grouped = [];
+  const processedIds = new Set();
+
+  answers.forEach((answer) => {
+    if (processedIds.has(answer.question_id)) return;
+
+    if (answer.parent_question_id) {
+      let parentGroup = grouped.find(g => g.question_id === answer.parent_question_id);
+      
+      if (!parentGroup) {
+        parentGroup = {
+          question_id: answer.parent_question_id,
+          q_text: answer.q_text,
+          subAnswers: []
+        };
+        grouped.push(parentGroup);
+      }
+
+      parentGroup.subAnswers.push({
+        question_id: answer.question_id,
+        sub_question_label: answer.sub_question_label,
+        value: answer.value
+      });
+
+      processedIds.add(answer.question_id);
+    } else {
+      grouped.push({
+        question_id: answer.question_id,
+        q_text: answer.q_text,
+        value: answer.value,
+        subAnswers: []
+      });
+      processedIds.add(answer.question_id);
+    }
+  });
+
+  return grouped;
+}
+
+// Helper function to format answer values
+function formatAnswerValue(value) {
+  if (value === null || value === undefined) {
+    return 'No answer provided';
+  }
+  
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.join(', ');
+      } else if (typeof parsed === 'object') {
+        return JSON.stringify(parsed);
+      } else {
+        return String(parsed);
+      }
+    } catch {
+      return value;
+    }
+  }
+  
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  
+  return String(value);
 }

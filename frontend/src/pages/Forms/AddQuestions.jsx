@@ -32,8 +32,9 @@ export default function AddQuestions() {
   };
 
   useEffect(() => {
-    load();
-  }, [id]);
+  load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [id]);
 
   const add = async () => {
     try {
@@ -94,20 +95,49 @@ export default function AddQuestions() {
     setHasChanges(true);
   };
 
-  // Save all changes
+  // Save all changes including sub-questions
   const saveAll = async () => {
     try {
       setSaving(true);
       setError("");
       
-      // Save all questions with updated data
+      // Save all main questions with updated data
       for (const question of questions) {
         await updateQuestion(question.id, question);
+        
+        // Handle sub-questions
+        if (question.subQuestions && question.subQuestions.length > 0) {
+          for (const subQ of question.subQuestions) {
+            // If sub-question has a temporary ID (starts with "temp_"), create it
+            if (String(subQ.id).startsWith("temp_")) {
+              await addQuestion(id, {
+                q_text: question.q_text, // Use parent question text
+                q_type: subQ.q_type,
+                required: subQ.required,
+                order_index: question.order_index,
+                extra: subQ.extra,
+                parent_question_id: question.id,
+                sub_question_label: subQ.sub_question_label
+              });
+            } else {
+              // Update existing sub-question
+              await updateQuestion(subQ.id, {
+                q_text: question.q_text, // Use parent question text
+                q_type: subQ.q_type,
+                required: subQ.required,
+                order_index: question.order_index,
+                extra: subQ.extra,
+                parent_question_id: question.id,
+                sub_question_label: subQ.sub_question_label
+              });
+            }
+          }
+        }
       }
       
       setHasChanges(false);
       alert("All changes saved successfully!");
-      await load(); // Reload to get fresh data
+      await load(); // Reload to get fresh data with real IDs
     } catch (err) {
       console.error("Error saving questions:", err);
       setError(err.response?.data?.message || "Failed to save questions");
@@ -117,7 +147,7 @@ export default function AddQuestions() {
   };
 
   const remove = async (qid) => {
-    if (!window.confirm("Are you sure you want to delete this question?")) {
+    if (!window.confirm("Are you sure you want to delete this question? This will also delete all sub-questions.")) {
       return;
     }
     
@@ -157,7 +187,7 @@ export default function AddQuestions() {
 
       <div className="bg-white p-6 shadow-lg rounded-xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">{form.title} — Edit Questions</h2>
+          <h2 className="text-2xl font-bold">{form.title} – Edit Questions</h2>
           
           {/* Save Button */}
           {hasChanges && (

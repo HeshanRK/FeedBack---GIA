@@ -21,19 +21,22 @@ export class AnswerModel {
     return rows;
   }
 
-  // ⭐ NEW FIX — Fetch answers + question text
+  // Fetch answers + question text + sub-question info (parent_question_id, sub_question_label)
   static async findByResponseIdWithQuestions(responseId) {
-  const [rows] = await pool.query(
-    `SELECT 
-        a.*, 
-        q.q_text AS q_text
-     FROM answers a
-     LEFT JOIN questions q ON a.question_id = q.id
-     WHERE a.response_id = ?`,
-    [responseId]
-  );
+    const [rows] = await pool.query(
+      `SELECT 
+          a.*, 
+          q.q_text AS q_text,
+          q.parent_question_id AS parent_question_id,
+          q.sub_question_label AS sub_question_label
+       FROM answers a
+       LEFT JOIN questions q ON a.question_id = q.id
+       WHERE a.response_id = ?
+       ORDER BY q.order_index ASC, q.parent_question_id ASC, q.id ASC`,
+      [responseId]
+    );
 
-  return rows;
-}
+    return rows;
+  }
 
 }

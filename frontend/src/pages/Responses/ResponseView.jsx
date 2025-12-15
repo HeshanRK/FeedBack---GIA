@@ -21,7 +21,10 @@ export default function ResponseView() {
           headers: { Authorization: `Bearer ${getToken()}` }
         });
         console.log("Response data:", res.data);
-        setResponse(res.data);
+        
+        // Group answers by parent question
+        const groupedAnswers = groupAnswersByParent(res.data);
+        setResponse(groupedAnswers);
       } catch (err) {
         console.error("Error fetching response:", err);
         setError(err.response?.data?.message || "Failed to load response");
@@ -32,6 +35,53 @@ export default function ResponseView() {
 
     fetchResponse();
   }, [id]);
+
+  // Group sub-question answers under their parent question
+  const groupAnswersByParent = (answers) => {
+    const grouped = [];
+    const processedIds = new Set();
+
+    answers.forEach((answer) => {
+      // Skip if already processed
+      if (processedIds.has(answer.question_id)) return;
+
+      // If this is a sub-question (has parent_question_id)
+      if (answer.parent_question_id) {
+        // Check if parent already in grouped array
+        let parentGroup = grouped.find(g => g.question_id === answer.parent_question_id);
+        
+        if (!parentGroup) {
+          // Create parent group
+          parentGroup = {
+            question_id: answer.parent_question_id,
+            q_text: answer.q_text, // Parent question text
+            subAnswers: []
+          };
+          grouped.push(parentGroup);
+        }
+
+        // Add this sub-question answer to parent
+        parentGroup.subAnswers.push({
+          question_id: answer.question_id,
+          sub_question_label: answer.sub_question_label,
+          value: answer.value
+        });
+
+        processedIds.add(answer.question_id);
+      } else {
+        // Regular question (no parent)
+        grouped.push({
+          question_id: answer.question_id,
+          q_text: answer.q_text,
+          value: answer.value,
+          subAnswers: []
+        });
+        processedIds.add(answer.question_id);
+      }
+    });
+
+    return grouped;
+  };
 
   const download = async () => {
     try {
@@ -56,43 +106,34 @@ export default function ResponseView() {
       return <span className="text-gray-400 italic">No answer provided</span>;
     }
     
-    // If it's already an array, join with commas
     if (Array.isArray(value)) {
       return value.length > 0 ? value.join(", ") : <span className="text-gray-400 italic">No answer provided</span>;
     }
     
-    // If it's a string, try to parse as JSON
     if (typeof value === 'string') {
       const stringValue = value.trim();
       
-      // Check if it looks like JSON (starts with [ or {)
       if (stringValue.startsWith('[') || stringValue.startsWith('{')) {
         try {
           const parsed = JSON.parse(stringValue);
           
-          // If parsed result is an array, join with commas
           if (Array.isArray(parsed)) {
             return parsed.length > 0 ? parsed.join(", ") : <span className="text-gray-400 italic">No answer provided</span>;
           }
           
-          // If it's an object, stringify it nicely
           return JSON.stringify(parsed, null, 2);
         } catch {
-          // If parsing fails, return as-is
           return stringValue || <span className="text-gray-400 italic">No answer provided</span>;
         }
       }
       
-      // Regular string - return as-is
       return stringValue || <span className="text-gray-400 italic">No answer provided</span>;
     }
     
-    // If it's an object (but not array), stringify it
     if (typeof value === 'object') {
       return JSON.stringify(value, null, 2);
     }
     
-    // For numbers or other types
     return String(value);
   };
 
@@ -169,19 +210,37 @@ export default function ResponseView() {
 
           {/* Answers */}
           <div className="p-6 space-y-6">
-            {response.map((answer, idx) => (
-              <div key={idx} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+            {response.map((item, idx) => (
+              <div key={item.question_id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                 <div className="flex items-start gap-3 mb-2">
                   <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                     <span className="text-indigo-600 font-semibold text-sm">{idx + 1}</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-800 text-lg mb-3">{answer.q_text}</p>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-gray-700 whitespace-pre-wrap">
-                        {formatAnswerValue(answer.value)}
-                      </p>
-                    </div>
+                    <p className="font-semibold text-gray-800 text-lg mb-3">{item.q_text}</p>
+                    
+                    {/* If has sub-answers, display them */}
+                    {item.subAnswers && item.subAnswers.length > 0 ? (
+                      <div className="space-y-3 ml-4 border-l-2 border-indigo-200 pl-4">
+                        {item.subAnswers.map((subAnswer) => (
+                          <div key={subAnswer.question_id} className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm font-semibold text-gray-700 mb-1">
+                              {subAnswer.sub_question_label}
+                            </p>
+                            <p className="text-gray-700">
+                              {formatAnswerValue(subAnswer.value)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Regular answer */
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {formatAnswerValue(item.value)}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

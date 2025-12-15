@@ -8,7 +8,7 @@ export const addQuestion = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid form ID" });
     }
     
-    const { q_text, q_type, required = false, order_index = 0, extra = null } = req.body;
+    const { q_text, q_type, required = false, order_index = 0, extra = null, parent_question_id = null, sub_question_label = null } = req.body;
     
     if (!q_text || q_text.trim() === "") {
       return res.status(400).json({ message: "Question text is required" });
@@ -32,7 +32,9 @@ export const addQuestion = async (req, res, next) => {
       q_type, 
       required: required ? 1 : 0, 
       order_index, 
-      extra 
+      extra,
+      parent_question_id,
+      sub_question_label: sub_question_label?.trim() || null
     });
     
     res.status(201).json({ questionId: id });
@@ -50,7 +52,7 @@ export const updateQuestion = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid question ID" });
     }
     
-    const { q_text, q_type, required = false, order_index = 0, extra = null } = req.body;
+    const { q_text, q_type, required = false, order_index = 0, extra = null, parent_question_id = null, sub_question_label = null } = req.body;
     
     if (q_text && q_text.trim() === "") {
       return res.status(400).json({ message: "Question text cannot be empty" });
@@ -66,7 +68,9 @@ export const updateQuestion = async (req, res, next) => {
       q_type, 
       required: required ? 1 : 0, 
       order_index, 
-      extra 
+      extra,
+      parent_question_id,
+      sub_question_label: sub_question_label?.trim() || null
     });
     
     res.json({ ok: true });

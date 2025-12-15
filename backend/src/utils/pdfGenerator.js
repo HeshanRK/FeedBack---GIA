@@ -1,7 +1,9 @@
 import puppeteer from "puppeteer";
 
 export async function generatePdfFromResponse({ response, answers, questions }) {
-  // Build a professional HTML representation matching the form view
+  // Group answers by parent question for sub-questions
+  const groupedAnswers = groupAnswersByParent(answers);
+
   const html = `
   <!DOCTYPE html>
   <html lang="en">
@@ -9,7 +11,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
     <meta charset="utf-8" />
     <title>Response ${response.id}</title>
     <style>
-      /* Match FormView styling */
       body {
         background-color: #e5e7eb;
         font-family: 'Times New Roman', serif;
@@ -28,7 +29,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       }
 
-      /* Header - Letterhead Style (No Logo) */
       .header {
         border-bottom: 2px solid #000;
         padding-bottom: 20px;
@@ -58,7 +58,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
         letter-spacing: 1px;
       }
 
-      /* Content Area */
       .form-content {
         position: relative;
         z-index: 1;
@@ -66,7 +65,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
         padding-bottom: 40px;
       }
 
-      /* Date Display */
       .date-display {
         display: flex;
         justify-content: flex-end;
@@ -94,7 +92,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
         padding: 5px 0;
       }
 
-      /* Response Information Section */
       .response-info {
         background-color: #f9fafb;
         border: 2px solid #e5e7eb;
@@ -145,7 +142,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
         border: 1px solid #e5e7eb;
       }
 
-      /* Questions and Answers */
       .question-block {
         margin-bottom: 40px;
         page-break-inside: avoid;
@@ -203,12 +199,44 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
         background-color: #fafafa;
       }
 
+      /* SUB-QUESTION STYLES */
+      .sub-answers-container {
+        margin-left: 50px;
+        margin-top: 15px;
+        border-left: 3px solid #e0e7ff;
+        padding-left: 20px;
+      }
+
+      .sub-answer-item {
+        margin-bottom: 15px;
+        padding: 12px;
+        background-color: #f9fafb;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+      }
+
+      .sub-answer-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: #4f46e5;
+        text-transform: uppercase;
+        font-family: 'Segoe UI', sans-serif;
+        margin-bottom: 5px;
+        letter-spacing: 0.5px;
+      }
+
+      .sub-answer-value {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: #1f2937;
+        word-wrap: break-word;
+      }
+
       .no-answer {
         color: #9ca3af;
         font-style: italic;
       }
 
-      /* Footer */
       .doc-footer {
         position: relative;
         z-index: 1;
@@ -227,7 +255,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
 
     <div class="paper-doc">
       
-      <!-- Header - Letterhead (No Logo) -->
       <header class="header">
         <h1>Feedback Form</h1>
         <p>GIA Feedback System</p>
@@ -235,7 +262,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
 
       <div class="form-content">
         
-        <!-- Date Display -->
         <div class="date-display">
           <div class="date-box">
             <div class="date-label">Date</div>
@@ -247,7 +273,6 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
           </div>
         </div>
 
-        <!-- Response Information -->
         <div class="response-info">
           <h2>Response Information</h2>
           <div class="info-grid">
@@ -292,49 +317,51 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
           </div>
         </div>
 
-        <!-- Questions and Answers -->
-        ${answers.map((a, index) => {
-          const questionText = a.q_text || (questions.find(q => q.id === a.question_id)?.q_text) || `Question ${a.question_id}`;
-          
-          // Convert value to string properly and handle arrays
-          let displayValue = "";
-          if (a.value === null || a.value === undefined) {
-            displayValue = "";
-          } else if (Array.isArray(a.value)) {
-            // If it's an array, join with commas (for checkbox answers)
-            displayValue = a.value.join(", ");
-          } else if (typeof a.value === "object") {
-            displayValue = JSON.stringify(a.value, null, 2);
-          } else {
-            displayValue = String(a.value);
-          }
-          
-          const hasAnswer = displayValue && String(displayValue).trim() !== "";
-          const isLongAnswer = displayValue.length > 50 || displayValue.includes('\n');
-          
+        ${groupedAnswers.map((item, index) => {
           return `
           <div class="question-block">
             <div>
               <span class="question-number">${index + 1}</span>
-              <span class="question-label">${escapeHtml(questionText)}</span>
+              <span class="question-label">${escapeHtml(item.q_text)}</span>
             </div>
-            ${isLongAnswer ? `
-              <div class="answer-textarea ${!hasAnswer ? 'no-answer' : ''}">
-                ${hasAnswer ? escapeHtml(displayValue) : 'No answer provided'}
+            
+            ${item.subAnswers && item.subAnswers.length > 0 ? `
+              <div class="sub-answers-container">
+                ${item.subAnswers.map(subAnswer => {
+                  const hasAnswer = subAnswer.value && String(subAnswer.value).trim() !== "";
+                  return `
+                    <div class="sub-answer-item">
+                      <div class="sub-answer-label">${escapeHtml(subAnswer.sub_question_label)}</div>
+                      <div class="sub-answer-value ${!hasAnswer ? 'no-answer' : ''}">
+                        ${hasAnswer ? escapeHtml(String(subAnswer.value)) : 'No answer provided'}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
               </div>
             ` : `
-              <div class="answer-line ${!hasAnswer ? 'no-answer' : ''}">
-                ${hasAnswer ? escapeHtml(displayValue) : 'No answer provided'}
-              </div>
+              ${(() => {
+                const displayValue = item.value || "";
+                const hasAnswer = displayValue && String(displayValue).trim() !== "";
+                const isLongAnswer = String(displayValue).length > 50 || String(displayValue).includes('\n');
+                
+                return isLongAnswer ? `
+                  <div class="answer-textarea ${!hasAnswer ? 'no-answer' : ''}">
+                    ${hasAnswer ? escapeHtml(String(displayValue)) : 'No answer provided'}
+                  </div>
+                ` : `
+                  <div class="answer-line ${!hasAnswer ? 'no-answer' : ''}">
+                    ${hasAnswer ? escapeHtml(String(displayValue)) : 'No answer provided'}
+                  </div>
+                `;
+              })()}
             `}
-            ${a.file_path ? `<div style="margin-left: 50px; margin-top: 10px; font-size: 12px; color: #6b7280;">📎 File: ${escapeHtml(a.file_path)}</div>` : ''}
           </div>
           `;
         }).join("")}
 
       </div>
 
-      <!-- Footer -->
       <footer class="doc-footer">
         Generated by GIA Feedback System. Internal Use Only. © 2025
       </footer>
@@ -374,6 +401,47 @@ export async function generatePdfFromResponse({ response, answers, questions }) 
       await browser.close();
     }
   }
+}
+
+// Helper function to group answers by parent
+function groupAnswersByParent(answers) {
+  const grouped = [];
+  const processedIds = new Set();
+
+  answers.forEach((answer) => {
+    if (processedIds.has(answer.question_id)) return;
+
+    if (answer.parent_question_id) {
+      let parentGroup = grouped.find(g => g.question_id === answer.parent_question_id);
+      
+      if (!parentGroup) {
+        parentGroup = {
+          question_id: answer.parent_question_id,
+          q_text: answer.q_text,
+          subAnswers: []
+        };
+        grouped.push(parentGroup);
+      }
+
+      parentGroup.subAnswers.push({
+        question_id: answer.question_id,
+        sub_question_label: answer.sub_question_label,
+        value: answer.value
+      });
+
+      processedIds.add(answer.question_id);
+    } else {
+      grouped.push({
+        question_id: answer.question_id,
+        q_text: answer.q_text,
+        value: answer.value,
+        subAnswers: []
+      });
+      processedIds.add(answer.question_id);
+    }
+  });
+
+  return grouped;
 }
 
 function escapeHtml(str) {
